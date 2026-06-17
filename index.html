@@ -640,8 +640,11 @@ async function procFile(file){
     if(W.srcType==='image'||file.type.startsWith('image/')){
       const du=await toDataUrl(file);await sendToAI(null,{b64:du.split(',')[1],mt:file.type||'image/jpeg'});
     }else{
-      await loadMammoth();const buf=await file.arrayBuffer();
+      // DOCX: extract text with mammoth, then send to AI
+      await loadMammoth();
+      const buf=await file.arrayBuffer();
       const res=await mammoth.extractRawText({arrayBuffer:buf});
+      if(!res.value.trim()){throw new Error('הקובץ ריק או לא ניתן לקריאה')}
       await sendToAI(res.value,null);
     }
   }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
@@ -658,7 +661,7 @@ async function sendToAI(text,image){
   if(!key){toast('הוסף API Key בהגדרות');W.step=0;rwiz();return}
   const cats=JSON.stringify({topics:D.topics,tools:D.tools});
   const sys=`You extract prompts AND classify them using existing categories.
-Return ONLY a JSON array, no markdown:
+Return ONLY a JSON array, no markdown, no explanation, no code fences:
 [{"title":"short title","content":"full prompt text","suggestions":{"topic":"best matching topic or null","sub":"best matching subtopic or null","tool":"best matching tool or null","type":"כללי|חיובי|שלילי|מערכת","media":"טקסט|תמונה|וידאו|אודיו|קוד"}}]
 Available categories: ${cats}
 Media rules: תמונה for image generation prompts (Midjourney/DALL-E/Flux/Stable Diffusion etc), וידאו for video prompts (Runway/Kling/Sora etc), אודיו for music/sound, קוד for coding, טקסט for everything else.
@@ -667,11 +670,21 @@ Rules: match existing categories when possible. title should be short and descri
   if(image){uc.push({type:'image',source:{type:'base64',media_type:image.mt,data:image.b64}});uc.push({type:'text',text:'Extract all prompts from this image. Classify using the provided categories. Return JSON only.'})}
   else uc.push({type:'text',text:`Extract and classify all prompts:\n\n${text.slice(0,28000)}`});
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,system:sys,messages:[{role:'user',content:uc}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-calls':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,system:sys,messages:[{role:'user',content:uc}]})
+    });
     const data=await r.json();
     if(data.error)throw new Error(data.error.message);
     const raw=data.content.find(b=>b.type==='text')?.text||'[]';
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const clean=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    const parsed=JSON.parse(clean);
     if(!Array.isArray(parsed)||!parsed.length)throw new Error('לא נמצאו פרומפטים');
     W.prompts=parsed;W.sel=parsed.map(()=>true);W.results={};W.step=1;rwiz();
   }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
