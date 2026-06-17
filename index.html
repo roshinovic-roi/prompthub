@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PromptHub</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#fff;--bg2:#f5f4f1;--bg3:#eeece8;
+  --text:#1a1a1a;--text2:#555550;--text3:#888880;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+  --purple:#534AB7;--pl:#EEEDFE;--pm:#CECBF6;--pd:#3C3489;
+  --tl:#E1F5EE;--td:#085041;--al:#FAEEDA;--ad:#633806;
+  --red:#E24B4A;--rl:#FCEBEB;--rd:#791F1F;
+  --gl:#EAF3DE;--gd:#27500A;--bl:#E6F1FB;--bd:#0C447C;
+  --r:10px;--rlg:16px;
+  --sh:0 1px 3px rgba(0,0,0,0.07),0 0 0 0.5px rgba(0,0,0,0.07);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1e;--bg2:#252527;--bg3:#2e2e30;
+  --text:#f0efe9;--text2:#a8a8a0;--text3:#666660;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+  --pl:#2a2460;--pm:#3d3580;--purple:#8b82e0;--pd:#c4bef8;
+  --tl:#0a3328;--td:#9FE1CB;--al:#3a2a08;--ad:#FAC775;
+  --rl:#3a1010;--rd:#F09595;--gl:#152808;--gd:#C0DD97;--bl:#0a1e38;--bd:#85B7EB;
+}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg2);color:var(--text);line-height:1.5;min-height:100vh;direction:rtl;overflow-x:hidden}
+
+/* ── NAV ── */
+nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1rem;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:60;gap:8px}
+.logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:7px;flex-shrink:0;letter-spacing:-.3px}
+.logo-icon{width:30px;height:30px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0}
+.nav-r{display:flex;gap:6px;align-items:center}
+
+/* ── BUTTONS ── */
+.btn{height:40px;padding:0 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);font-size:14px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;transition:background .12s,transform .08s;min-width:40px}
+.btn:active{transform:scale(0.95);background:var(--bg3)}
+.bp{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:600}
+.bp:active{background:var(--pd)}
+.bs{height:34px;padding:0 10px;font-size:13px;border-radius:8px}
+.bico{width:38px;height:38px;padding:0;border-radius:9px}
+.bd{color:var(--red);border-color:var(--red)}
+.bd:active{background:var(--rl)}
+
+/* ── INPUTS ── */
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--text);background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r);padding:0 .75rem;height:44px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(83,74,183,0.12)}
+textarea{height:auto;min-height:120px;padding:.65rem .75rem;resize:vertical;line-height:1.6;font-size:15px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 12px center;padding-left:32px}
+
+/* ── MAIN ── */
+main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-bottom))}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.85rem}
+.stat{background:var(--bg);border-radius:var(--r);box-shadow:var(--sh);padding:.75rem .4rem;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:border-color .15s,box-shadow .15s;user-select:none;active-opacity:0.8}
+.stat:active{transform:scale(0.97)}
+.stat.on{border-color:var(--purple);box-shadow:0 0 0 3px rgba(83,74,183,0.1)}
+.stat i{font-size:17px;color:var(--text3);display:block;margin-bottom:3px}
+.stat-n{font-size:22px;font-weight:700;color:var(--text)}
+.stat-l{font-size:10px;color:var(--text3);margin-top:1px}
+.stat.on i,.stat.on .stat-l,.stat.on .stat-n{color:var(--purple)}
+
+/* ── TREE ── */
+.tree-panel{background:var(--bg);border-radius:var(--rlg);box-shadow:var(--sh);margin-bottom:.85rem;overflow:hidden;animation:fd .15s ease}
+@keyframes fd{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.tree-hd{display:flex;align-items:center;justify-content:space-between;padding:.55rem .9rem;border-bottom:0.5px solid var(--border)}
+.tree-title{font-size:13px;font-weight:600;color:var(--text2)}
+.tree-cols{display:flex}
+.tc{flex:1;min-width:0;border-left:0.5px solid var(--border)}
+.tc:last-child{border-left:none}
+.tc-h{font-size:10px;font-weight:600;color:var(--text3);padding:.35rem .8rem;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+.ti{display:flex;align-items:center;justify-content:space-between;padding:.42rem .8rem;font-size:13px;color:var(--text);cursor:pointer;gap:6px;border-right:2.5px solid transparent;transition:background .1s}
+.ti:active,.ti:hover{background:var(--bg2)}
+.ti.on{background:var(--pl);color:var(--pd);border-right-color:var(--purple);font-weight:600}
+.ti .cn{font-size:11px;background:var(--bg2);color:var(--text3);border-radius:999px;padding:1px 6px;flex-shrink:0}
+.ti.on .cn{background:var(--pm);color:var(--pd)}
+.te{padding:1.1rem .8rem;font-size:13px;color:var(--text3);text-align:center}
+.tree-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:.45rem .9rem;border-top:0.5px solid var(--border);background:var(--bg2);min-height:34px}
+
+/* ── FILTER BAR ── */
+.filter-hint{font-size:12px;color:var(--text3)}
+.fpill{display:inline-flex;align-items:center;gap:3px;font-size:12px;padding:3px 8px;border-radius:999px;background:var(--pl);color:var(--pd);font-weight:500}
+.fpill button{background:none;border:none;cursor:pointer;color:var(--purple);font-size:11px;padding:0;line-height:1;display:flex}
+.fclr{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:7px;margin-bottom:.85rem;flex-wrap:wrap}
+.sw{flex:1;min-width:160px;position:relative}
+.sw input{padding-right:36px!important;height:40px;font-size:15px}
+.sw i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
+.toolbar select{height:40px;font-size:14px}
+
+/* ── CARDS ── */
+.cards{display:grid;gap:9px}
+.card{background:var(--bg);border-radius:var(--rlg);box-shadow:var(--sh);padding:1rem 1.1rem;transition:box-shadow .15s}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:.5rem}
+.meta{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;white-space:nowrap}
+.bt{background:var(--pl);color:var(--pd)}.bsub{background:var(--tl);color:var(--td)}
+.btool{background:var(--al);color:var(--ad)}.bneg{background:var(--rl);color:var(--rd)}
+.bpos{background:var(--gl);color:var(--gd)}.bsys{background:var(--bl);color:var(--bd)}
+.bref{background:var(--bl);color:var(--bd)}
+.actions{display:flex;gap:3px;flex-shrink:0}
+.card-title{font-size:14px;font-weight:600;margin-bottom:.3rem}
+.card-body{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:66px;overflow:hidden;transition:max-height .3s}
+.card-body.exp{max-height:800px}
+.card-foot{margin-top:.55rem;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text3)}
+.exp-btn{background:none;border:none;cursor:pointer;font-size:12px;color:var(--purple);font-family:inherit;padding:0}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.tag{background:var(--bg2);border:0.5px solid var(--border);border-radius:999px;font-size:11px;padding:2px 8px;color:var(--text3);cursor:pointer}
+.tag:active{border-color:var(--purple);color:var(--purple)}
+.empty{text-align:center;padding:3.5rem 1rem;color:var(--text3)}
+.empty i{font-size:44px;display:block;margin-bottom:.7rem;opacity:.28}
+.empty p{font-size:14px}
+
+/* ── MODAL (bottom sheet) ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:200;padding:0}
+@media(min-width:600px){.modal-bg{align-items:center;justify-content:center;padding:1rem}}
+.modal{background:var(--bg);border-radius:22px 22px 0 0;padding:1.1rem 1.1rem calc(1.5rem + var(--safe-bottom));width:100%;max-width:580px;max-height:95vh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:var(--rlg);padding:1.4rem;max-height:92vh}}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .9rem}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.modal-head h2{font-size:16px;font-weight:700}
+.field{margin-bottom:.9rem}
+.field label{display:block;font-size:13px;color:var(--text2);margin-bottom:5px;font-weight:500}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.add-opt{display:flex;gap:5px;margin-top:5px}
+.add-opt input{flex:1;height:38px;font-size:14px}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:.9rem;border-top:0.5px solid var(--border)}
+
+/* ── SETTINGS ── */
+.settings-wrap{background:var(--bg);border-radius:var(--rlg);box-shadow:var(--sh);padding:1rem 1.1rem;margin-bottom:.85rem;animation:fd .15s ease}
+.settings-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.settings-hd h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+.key-wrap{display:flex;gap:7px}
+.key-wrap input{flex:1;font-family:monospace;font-size:13px;letter-spacing:.04em;height:42px}
+.key-st{font-size:12px;margin-top:5px;display:flex;align-items:center;gap:4px}
+.key-ok{color:var(--gd)}.key-no{color:var(--text3)}
+
+/* ── WIZARD (bottom sheet) ── */
+.wiz-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;z-index:250}
+@media(min-width:600px){.wiz-bg{align-items:center;justify-content:center;padding:1rem}}
+.wiz{background:var(--bg);border-radius:22px 22px 0 0;width:100%;max-width:620px;max-height:96vh;overflow:hidden;display:flex;flex-direction:column}
+@media(min-width:600px){.wiz{border-radius:var(--rlg);max-height:92vh}}
+.wiz-drag{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:.7rem auto .2rem;flex-shrink:0}
+.wiz-hd{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1.1rem .5rem;flex-shrink:0}
+.wiz-hd h2{font-size:15px;font-weight:700}
+.wiz-prog{display:flex;align-items:center;gap:5px;padding:.3rem 1.1rem .6rem;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.wp{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0}
+.wp.done{color:var(--td)}.wp.active{color:var(--purple);font-weight:700}
+.wp-sep{color:var(--border2);font-size:13px}
+.wiz-body{padding:.9rem 1.1rem;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.wiz-foot{padding:.75rem 1.1rem calc(.9rem + var(--safe-bottom));border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0;background:var(--bg)}
+@media(min-width:600px){.wiz-foot{padding:.75rem 1.1rem .9rem}}
+
+/* ── DROP ZONE ── */
+.dz{border:2px dashed var(--border2);border-radius:var(--rlg);padding:2rem 1rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.dz:active,.dz.drag{border-color:var(--purple);background:var(--pl)}
+.dz i{font-size:40px;color:var(--text3);display:block;margin-bottom:.6rem;opacity:.5}
+.dz p{font-size:14px;font-weight:600;color:var(--text2)}
+.dz small{font-size:12px;color:var(--text3);margin-top:4px;display:block}
+
+/* ── SOURCE GRID ── */
+.src-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.src-btn{border:0.5px solid var(--border2);border-radius:var(--rlg);padding:1rem .75rem;text-align:center;cursor:pointer;background:var(--bg);transition:border-color .15s,background .15s;user-select:none}
+.src-btn:active{border-color:var(--purple);background:var(--pl)}
+.src-btn i{font-size:28px;color:var(--purple);display:block;margin-bottom:.45rem;opacity:.8}
+.src-btn strong{font-size:13px;color:var(--text);display:block}
+.src-btn small{font-size:11px;color:var(--text3);display:block;margin-top:2px}
+
+/* ── AI LOADING ── */
+.ai-load{text-align:center;padding:2.5rem 1rem}
+.ai-load i{font-size:38px;color:var(--purple);display:block;margin-bottom:.75rem;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ai-load p{font-size:14px;font-weight:600;color:var(--text)}
+.ai-load small{font-size:12px;color:var(--text3);margin-top:5px;display:block}
+
+/* ── PROMPT LIST ── */
+.wiz-list{display:grid;gap:7px}
+.wiz-item{background:var(--bg2);border:1.5px solid transparent;border-radius:var(--r);padding:.7rem .9rem;cursor:pointer;display:flex;align-items:flex-start;gap:9px;transition:border-color .12s}
+.wiz-item.on{border-color:var(--purple);background:var(--pl)}
+.wiz-cb{width:20px;height:20px;flex-shrink:0;margin-top:1px;cursor:pointer;accent-color:var(--purple)}
+.wiz-t{font-size:13px;font-weight:600;margin-bottom:2px}
+.wiz-p{font-size:12px;color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+/* ── AI SUGGESTIONS ── */
+.ai-suggest{background:linear-gradient(135deg,var(--pl),var(--bg2));border:1px solid var(--pm);border-radius:var(--r);padding:.75rem .9rem;margin-bottom:.9rem;font-size:13px}
+.ai-suggest-hd{font-size:12px;font-weight:600;color:var(--pd);margin-bottom:.5rem;display:flex;align-items:center;gap:5px}
+.ai-tags{display:flex;gap:5px;flex-wrap:wrap}
+.ai-tag{background:var(--pm);color:var(--pd);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit}
+.ai-tag:active{background:var(--purple);color:#fff}
+.ai-tag.applied{background:var(--purple);color:#fff}
+
+/* ── CLASSIFY PREVIEW ── */
+.cp{background:var(--bg2);border-radius:var(--r);padding:.7rem .9rem;font-size:13px;color:var(--text2);line-height:1.6;max-height:90px;overflow:hidden;margin-bottom:.6rem;white-space:pre-wrap;word-break:break-word;transition:max-height .25s}
+.cp.exp{max-height:320px}
+.cp-toggle{font-size:12px;color:var(--purple);background:none;border:none;cursor:pointer;padding:0;margin-bottom:.7rem;font-family:inherit;display:block}
+
+/* ── PROGRESS DOTS ── */
+.prog-dots{display:flex;gap:4px;justify-content:center;margin-bottom:.75rem}
+.pd{width:22px;height:4px;border-radius:2px;background:var(--border2);transition:background .2s}
+.pd.done{background:var(--td)}.pd.cur{background:var(--purple)}
+
+/* ── REF ── */
+.ref-row{display:flex;align-items:flex-start;gap:10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:.85rem .9rem;margin-bottom:.75rem;cursor:pointer}
+.ref-row input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:2px;accent-color:var(--purple)}
+.ref-box{border:0.5px solid var(--border);border-radius:var(--r);padding:.75rem .9rem;margin-bottom:.75rem}
+.ref-img{max-width:100%;max-height:100px;border-radius:7px;margin-top:.5rem;display:none}
+.ref-img.show{display:block}
+
+/* ── SUMMARY ── */
+.sum-item{background:var(--bg2);border-radius:var(--r);padding:.65rem .85rem;margin-bottom:.6rem}
+.sum-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.sum-badges{display:flex;gap:4px;flex-wrap:wrap}
+
+/* ── NO KEY BANNER ── */
+.no-key{background:var(--al);border:0.5px solid var(--ad);border-radius:var(--r);padding:.65rem .9rem;font-size:13px;color:var(--ad);display:flex;align-items:center;gap:8px;margin-bottom:.85rem;cursor:pointer}
+
+/* ── MEDIA CHIPS ── */
+.media-chip{border:1.5px solid var(--border2);border-radius:var(--r);padding:.45rem .2rem;text-align:center;cursor:pointer;font-size:17px;line-height:1.2;transition:border-color .15s,background .15s;-webkit-tap-highlight-color:transparent}
+.media-chip span{display:block;font-size:10px;color:var(--text3);margin-top:2px;font-weight:500}
+.media-chip.sel{border-color:var(--purple);background:var(--pl)}
+.media-chip.sel span{color:var(--pd)}
+/* ── ADD WIZARD ── */
+.aw-step-btn{border:2px solid var(--border2);border-radius:var(--rlg);padding:1rem .75rem;text-align:center;cursor:pointer;background:var(--bg);transition:border-color .15s,background .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+.aw-step-btn:active{transform:scale(0.97)}
+.aw-step-btn.sel{border-color:var(--purple);background:var(--pl)}
+.aw-step-btn i{font-size:26px;color:var(--text3);display:block;margin-bottom:.35rem}
+.aw-step-btn.sel i{color:var(--purple)}
+.aw-step-btn .lbl{font-size:13px;font-weight:600;color:var(--text)}
+.aw-step-btn .sub{font-size:11px;color:var(--text3);margin-top:2px}
+.aw-step-btn.sel .lbl{color:var(--pd)}
+.aw-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aw-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.aw-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.aw-q{font-size:19px;font-weight:700;color:var(--text);margin-bottom:.2rem;line-height:1.3}
+.aw-sub{font-size:13px;color:var(--text3);margin-bottom:1rem}
+.aw-prog{display:flex;align-items:center;gap:5px;padding:.65rem 1.25rem .4rem;border-bottom:0.5px solid var(--border)}
+.aw-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:all .2s;flex-shrink:0}
+.aw-dot.done{background:var(--td)}
+.aw-dot.active{background:var(--purple);width:20px;border-radius:4px}
+.aw-new-row{display:flex;gap:6px;margin-top:.6rem}
+.aw-new-row input{flex:1}
+.aw-preview{background:var(--bg2);border-radius:var(--r);padding:.8rem 1rem;font-size:13px;color:var(--text2);line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:88px;overflow:hidden;transition:max-height .3s}
+.aw-preview.exp{max-height:350px}
+.aw-badge-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:.85rem}
+.bmedia{background:var(--bg3);color:var(--text2);border-color:var(--border2)}
+/* ── MISC ── */
+.copied{background:var(--gl)!important;border-color:#639922!important;color:var(--gd)!important}.toast{position:fixed;bottom:calc(1.5rem + var(--safe-bottom));left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:.5rem 1.25rem;border-radius:999px;font-size:14px;z-index:400;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{opacity:1}
+@media(prefers-color-scheme:dark){.toast{background:#f0efe9;color:#1a1a1a}}
+@media(max-width:480px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .field-row{grid-template-columns:1fr}
+  .tree-cols{flex-direction:column}
+  .tc{border-left:none;border-top:0.5px solid var(--border)}
+  .tc:first-child{border-top:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-sparkles" style="font-size:13px"></i></div>
+    PromptHub
+  </div>
+  <div class="nav-r">
+    <button class="btn bp bs" onclick="openWizard()" style="gap:5px">
+      <i class="ti ti-wand"></i> ייבוא AI
+    </button>
+    <button class="btn bico bs" onclick="toggleSettings()" title="הגדרות">
+      <i class="ti ti-settings"></i>
+    </button>
+    <button class="btn bp bico" onclick="openModal()" title="פרומפט חדש">
+      <i class="ti ti-plus"></i>
+    </button>
+  </div>
+</nav>
+
+<main>
+  <!-- SETTINGS -->
+  <div id="settingsWrap" style="display:none" class="settings-wrap">
+    <div class="settings-hd">
+      <h3><i class="ti ti-key"></i> Anthropic API Key</h3>
+      <button class="btn bico bs" onclick="toggleSettings()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="field">
+      <div class="key-wrap">
+        <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkKeyInput()">
+        <button class="btn bp bs" onclick="saveKey()"><i class="ti ti-check"></i> שמור</button>
+      </div>
+      <div class="key-st" id="keySt"></div>
+      <p style="font-size:12px;color:var(--text3);margin-top:.5rem;line-height:1.5">נשמר רק במכשירך. נדרש לייבוא חכם של קבצים ותמונות.<br>השג מפתח ב: <a href="https://console.anthropic.com" target="_blank" style="color:var(--purple)">console.anthropic.com</a></p>
+    </div>
+    <div style="display:flex;gap:8px;padding-top:.75rem;border-top:0.5px solid var(--border)">
+      <button class="btn bs" onclick="exportData()"><i class="ti ti-download"></i> ייצוא</button>
+      <label class="btn bs" style="cursor:pointer"><i class="ti ti-upload"></i> ייבוא<input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
+    </div>
+  </div>
+
+  <div id="statsRow" class="stats"></div>
+
+  <!-- TREE -->
+  <div id="treePanel" style="display:none" class="tree-panel">
+    <div class="tree-hd">
+      <span class="tree-title" id="treeTitle"></span>
+      <button class="btn bico bs" onclick="closeTree()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="tree-cols" id="treeCols"></div>
+    <div class="tree-bar" id="treeBar"></div>
+  </div>
+
+  <!-- NO KEY BANNER -->
+  <div id="noKeyBanner" class="no-key" style="display:none" onclick="toggleSettings()">
+    <i class="ti ti-key" style="font-size:18px;flex-shrink:0"></i>
+    <span>הוסף API Key לייבוא חכם של קבצים ותמונות</span>
+    <i class="ti ti-chevron-left" style="margin-right:auto;opacity:.6"></i>
+  </div>
+
+  <div class="toolbar">
+    <div class="sw"><i class="ti ti-search"></i><input type="text" placeholder="חיפוש..." id="qInput" oninput="renderCards()"></div>
+    <select id="fTopic" onchange="onFTopicChange()"><option value="">כל הנושאים</option></select>
+    <select id="fSub" onchange="renderCards()"><option value="">כל תת-נושאים</option></select>
+    <select id="fTool" onchange="renderCards()"><option value="">כל הכלים</option></select>
+    <select id="fType" onchange="renderCards()">
+      <option value="">כל הסוגים</option>
+      <option>חיובי</option><option>שלילי</option><option>מערכת</option><option>כללי</option>
+    </select>
+    <select id="fMedia" onchange="renderCards()">
+      <option value="">כל המדיה</option>
+      <option value="טקסט">📝 טקסט</option>
+      <option value="תמונה">🖼️ תמונה</option>
+      <option value="וידאו">🎬 וידאו</option>
+      <option value="אודיו">🎵 אודיו</option>
+      <option value="קוד">💻 קוד</option>
+    </select>
+  </div>
+  <div class="cards" id="cardsWrap"></div>
+</main>
+
+<!-- ADD WIZARD (manual) -->
+<div id="addBg" class="modal-bg" style="display:none" onclick="addBgClick(event)">
+  <div class="modal" style="padding:0;overflow:hidden;max-height:88vh">
+    <div class="modal-handle"></div>
+    <!-- progress bar -->
+    <div id="addProg" style="display:flex;padding:.75rem 1.25rem .5rem;gap:6px;border-bottom:0.5px solid var(--border);overflow-x:auto;flex-shrink:0"></div>
+    <!-- step content -->
+    <div id="addBody" style="padding:1.25rem;overflow-y:auto;flex:1"></div>
+    <!-- footer -->
+    <div id="addFoot" style="padding:.85rem 1.25rem 1.5rem;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- IMPORT WIZARD -->
+<div id="wizBg" class="wiz-bg" style="display:none">
+  <div class="wiz">
+    <div class="wiz-drag"></div>
+    <div class="wiz-hd">
+      <h2>ייבוא חכם <span style="font-size:11px;background:var(--pl);color:var(--pd);border-radius:6px;padding:2px 7px;font-weight:600;vertical-align:1px">Claude AI</span></h2>
+      <button class="btn bico bs" onclick="closeWizard()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="wiz-prog" id="wizProg"></div>
+    <div class="wiz-body" id="wizBody"></div>
+    <div class="wiz-foot" id="wizFoot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK='prompthub_v3';
+let D={
+  prompts:[],
+  topics:['כתיבה','קוד','מחקר','שיווק','יצירתיות','תמיכה','עסקים','כללי'],
+  subs:{'כתיבה':['מיילים','בלוג','תסריטים','SEO'],'קוד':['Python','JavaScript','SQL','Review','Debug'],'מחקר':['סיכומים','ניתוח','השוואות'],'שיווק':['רשתות חברתיות','מודעות','תוכן'],'יצירתיות':['סיפורים','שירה','רעיונות'],'תמיכה':['לקוחות','מענה','FAQ'],'עסקים':['מצגות','דוחות','אסטרטגיה'],'כללי':['אחר']},
+  tools:['ChatGPT','Claude','Gemini','Midjourney','DALL-E','Runway','Kling','Flux','Sora','Stable Diffusion','כללי']
+};
+let editId=null,treeMode=null,treeSel={topic:null,sub:null,tool:null,type:null,media:null};
+
+// WIZARD STATE
+let W={step:0,srcType:'',prompts:[],sel:[],curIdx:0,results:{},curData:{}};
+
+function ld(){try{const s=localStorage.getItem(SK);if(s)D=JSON.parse(s)}catch(e){}}
+function sv(){localStorage.setItem(SK,JSON.stringify(D))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
+function getKey(){return localStorage.getItem('ph_key')||''}
+function saveKey(){const k=document.getElementById('apiKey').value.trim();localStorage.setItem('ph_key',k);renderKeySt();toast('✓ API Key נשמר');checkBanner()}
+function checkKeyInput(){}
+function renderKeySt(){
+  const k=getKey(),el=document.getElementById('keySt');if(!el)return;
+  el.innerHTML=k?`<i class="ti ti-circle-check" style="color:var(--gd)"></i><span class="key-ok">מפתח פעיל</span>`:`<span class="key-no">לא מוגדר</span>`;
+}
+function checkBanner(){document.getElementById('noKeyBanner').style.display=getKey()?'none':'flex'}
+function toggleSettings(){
+  const p=document.getElementById('settingsWrap'),show=p.style.display==='none';
+  p.style.display=show?'block':'none';
+  if(show){document.getElementById('apiKey').value=getKey();renderKeySt()}
+}
+
+// ─── WIZARD ───────────────────────────────────────────────
+const STEPS=['מקור','תוצאות','סיווג','רפרנס','שמירה'];
+function openWizard(){W={step:0,srcType:'',prompts:[],sel:[],curIdx:0,results:{},curData:{}};document.getElementById('wizBg').style.display='flex';rwiz()}
+function closeWizard(){document.getElementById('wizBg').style.display='none'}
+function rwizProg(){
+  document.getElementById('wizProg').innerHTML=STEPS.map((s,i)=>{
+    const c=i<W.step?'done':i===W.step?'active':'';
+    const ic=i<W.done?'<i class="ti ti-check" style="font-size:9px"></i>':'';
+    return`${i>0?'<span class="wp-sep">›</span>':''}<span class="wp ${c}">${i<W.step?'<i class="ti ti-check" style="font-size:9px"></i>':''}${s}</span>`;
+  }).join('');
+}
+
+function rwiz(){
+  rwizProg();
+  const B=document.getElementById('wizBody'),F=document.getElementById('wizFoot');
+  const hasKey=!!getKey();
+
+  // STEP 0 – SOURCE
+  if(W.step===0){
+    B.innerHTML=`
+      ${!hasKey?`<div class="no-key" onclick="closeWizard();toggleSettings()" style="margin-bottom:.9rem"><i class="ti ti-key" style="font-size:18px;flex-shrink:0"></i><span>הוסף API Key קודם</span><i class="ti ti-chevron-left" style="margin-right:auto;opacity:.6"></i></div>`:''}
+      <p style="font-size:13px;color:var(--text2);font-weight:500;margin-bottom:.8rem">מה תרצה לייבא?</p>
+      <div class="src-grid">
+        <div class="src-btn" onclick="pickSrc('docx')">
+          <i class="ti ti-file-type-docx"></i>
+          <strong>קובץ Word</strong>
+          <small>כל פורמט .docx</small>
+        </div>
+        <div class="src-btn" onclick="pickSrc('image')">
+          <i class="ti ti-camera"></i>
+          <strong>תמונה / צילום מסך</strong>
+          <small>מהגלריה או מהמצלמה</small>
+        </div>
+        <div class="src-btn" onclick="pickSrc('pdf')">
+          <i class="ti ti-file-type-pdf"></i>
+          <strong>PDF</strong>
+          <small>קובץ PDF</small>
+        </div>
+        <div class="src-btn" onclick="pickSrc('text')">
+          <i class="ti ti-clipboard-text"></i>
+          <strong>הדבקת טקסט</strong>
+          <small>ישירות בהדבקה</small>
+        </div>
+      </div>`;
+    F.innerHTML=`<span></span><button class="btn bs" onclick="closeWizard()">ביטול</button>`;
+  }
+
+  // STEP 0b – UPLOAD
+  else if(W.step==='upload'){
+    const isImg=W.srcType==='image';
+    B.innerHTML=`
+      <div class="dz" id="dz" onclick="document.getElementById('dzIn').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="hdrop(event)">
+        <i class="ti ${isImg?'ti-camera':'ti-file-upload'}"></i>
+        <p>${isImg?'בחר תמונה מהגלריה':'גרור קובץ לכאן'}</p>
+        <small>${isImg?'JPG · PNG · WEBP · צילום מסך':'לחץ לבחירה'}</small>
+      </div>
+      <input type="file" id="dzIn" accept="${isImg?'image/*':W.srcType==='pdf'?'.pdf':'.docx'}" ${isImg?'capture="environment"':''} style="display:none" onchange="hfile(event)">`;
+    F.innerHTML=`<button class="btn bs" onclick="W.step=0;rwiz()"><i class="ti ti-arrow-right"></i> חזור</button><span></span>`;
+  }
+
+  // STEP 0c – TEXT
+  else if(W.step==='text'){
+    B.innerHTML=`
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.65rem;font-weight:500">הדבק טקסט המכיל פרומפטים:</p>
+      <textarea id="pasteTA" style="min-height:160px;font-size:14px" placeholder="הדבק כאן..."></textarea>`;
+    F.innerHTML=`<button class="btn bs" onclick="W.step=0;rwiz()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp bs" onclick="sendText()"><i class="ti ti-sparkles"></i> נתח</button>`;
+  }
+
+  // LOADING
+  else if(W.step==='loading'){
+    B.innerHTML=`<div class="ai-load"><i class="ti ti-loader-2"></i><p>Claude מנתח...</p><small>מזהה פרומפטים בכל פורמט</small></div>`;
+    F.innerHTML=`<span></span><span></span>`;
+  }
+
+  // STEP 1 – RESULTS
+  else if(W.step===1){
+    const selN=W.sel.filter(Boolean).length;
+    B.innerHTML=`
+      <p style="font-size:13px;font-weight:500;margin-bottom:.6rem">זוהו <strong>${W.prompts.length}</strong> פרומפטים – בחר אילו לייבא:</p>
+      <div style="display:flex;gap:7px;margin-bottom:.75rem">
+        <button class="btn bs" onclick="selAll(true)">בחר הכל</button>
+        <button class="btn bs" onclick="selAll(false)">בטל הכל</button>
+      </div>
+      <div class="wiz-list" id="wizList">
+        ${W.prompts.map((p,i)=>`
+          <div class="wiz-item${W.sel[i]?' on':''}" onclick="togSel(${i})">
+            <input type="checkbox" class="wiz-cb" ${W.sel[i]?'checked':''} onclick="event.stopPropagation();togSel(${i})">
+            <div style="min-width:0;flex:1">
+              <div class="wiz-t">${esc(p.title)}</div>
+              <div class="wiz-p">${esc(p.content.slice(0,85))}...</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:.65rem" id="selCnt">${selN} נבחרו</p>`;
+    F.innerHTML=`<button class="btn bs" onclick="W.step=0;rwiz()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp bs" onclick="startClassify()">סווג <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 2 – CLASSIFY
+  else if(W.step===2){
+    const p=W.prompts[W.curIdx];
+    const selList=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0);
+    const pos=selList.indexOf(W.curIdx)+1;
+    const cd=W.curData;
+    const sugg=cd._suggestions||{};
+    B.innerHTML=`
+      <div class="prog-dots">${selList.map(idx=>`<div class="pd${idx===W.curIdx?' cur':W.results[idx]?' done':''}"></div>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <span style="font-size:12px;color:var(--text3)">פרומפט ${pos}/${selList.length}</span>
+        <span style="font-size:12px;color:var(--text2);font-weight:500">${esc((cd.title||p.title).slice(0,30))}</span>
+      </div>
+      <div class="cp" id="cpv">${esc(p.content)}</div>
+      <button class="cp-toggle" onclick="document.getElementById('cpv').classList.toggle('exp');this.textContent=document.getElementById('cpv').classList.contains('exp')?'▴ פחות':'▾ עוד'">▾ עוד</button>
+      ${sugg.topic||sugg.tool?`
+      <div class="ai-suggest">
+        <div class="ai-suggest-hd"><i class="ti ti-sparkles"></i> הצעות Claude – לחץ להחיל</div>
+        <div class="ai-tags">
+          ${sugg.topic?`<button class="ai-tag" id="st-t" onclick="applyS('topic','${esc(sugg.topic)}')">📁 ${esc(sugg.topic)}</button>`:''}
+          ${sugg.sub?`<button class="ai-tag" id="st-s" onclick="applyS('sub','${esc(sugg.sub)}')">↳ ${esc(sugg.sub)}</button>`:''}
+          ${sugg.tool?`<button class="ai-tag" id="st-tool" onclick="applyS('tool','${esc(sugg.tool)}')">🔧 ${esc(sugg.tool)}</button>`:''}
+          ${sugg.type&&sugg.type!=='כללי'?`<button class="ai-tag" id="st-type" onclick="applyS('type','${esc(sugg.type)}')">${sugg.type==='שלילי'?'✗':'✓'} ${esc(sugg.type)}</button>`:''}
+        </div>
+      </div>`:''}
+      <div class="field"><label>כותרת</label><input type="text" id="wTi" value="${esc(cd.title||p.title)}"></div>
+      <div class="field-row">
+        <div class="field">
+          <label>נושא <span style="color:var(--red)">*</span></label>
+          <select id="wTopic" onchange="onWTopic()">
+            <option value="">בחר...</option>
+            ${D.topics.map(t=>`<option value="${esc(t)}"${cd.topic===t?' selected':''}>${esc(t)}</option>`).join('')}
+          </select>
+          <div class="add-opt"><input id="wNT" placeholder="נושא חדש..."><button class="btn bico bs" onclick="addWT()"><i class="ti ti-plus"></i></button></div>
+        </div>
+        <div class="field">
+          <label>תת-נושא</label>
+          <select id="wSub">${wSubOpts()}</select>
+          <div class="add-opt"><input id="wNS" placeholder="תת-נושא..."><button class="btn bico bs" onclick="addWS()"><i class="ti ti-plus"></i></button></div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>כלי</label>
+          <select id="wTool">
+            <option value="">ללא</option>
+            ${D.tools.map(t=>`<option value="${esc(t)}"${cd.tool===t?' selected':''}>${esc(t)}</option>`).join('')}
+          </select>
+          <div class="add-opt"><input id="wNTool" placeholder="כלי חדש..."><button class="btn bico bs" onclick="addWTool()"><i class="ti ti-plus"></i></button></div>
+        </div>
+        <div class="field">
+          <label>סוג</label>
+          <select id="wType">${['כללי','חיובי','שלילי','מערכת'].map(t=>`<option${(cd.type||'כללי')===t?' selected':''}>${t}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="field"><label>תגיות</label><input id="wTags" value="${esc(cd.tags||'')}"></div>
+      <div class="field">
+        <label>סוג מדיה</label>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:2px">
+          ${['טקסט','תמונה','וידאו','אודיו','קוד'].map(m=>`<div class="media-chip${(cd.media||'טקסט')===m?' sel':''}" onclick="this.parentElement.querySelectorAll('.media-chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel');document.getElementById('wMedia').value='${m}'">${MEDIA_ICONS['${m}']||''} ${m==='טקסט'?'📝':m==='תמונה'?'🖼️':m==='וידאו'?'🎬':m==='אודיו'?'🎵':'💻'}<br><span>${m}</span></div>`).join('')}
+        </div>
+        <input type="hidden" id="wMedia" value="${esc(cd.media||'טקסט')}">
+      </div>`;
+    F.innerHTML=`
+      <button class="btn bs" onclick="skipCur()"><i class="ti ti-skip-forward"></i> דלג</button>
+      <button class="btn bp bs" onclick="saveCur()">הבא <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 3 – REF IMAGE
+  else if(W.step===3){
+    const p=W.prompts[W.curIdx];const cd=W.curData;
+    B.innerHTML=`
+      <p style="font-size:14px;font-weight:600;margin-bottom:.35rem">תמונת רפרנס</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.85rem">לפרומפט: <em>${esc((cd.title||p.title).slice(0,40))}</em></p>
+      <label class="ref-row">
+        <input type="checkbox" id="wRef" ${cd.addRef?'checked':''} onchange="togRef()">
+        <div>
+          <div style="font-size:13px;font-weight:600">הוסף גרסה עם תמונת רפרנס</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;line-height:1.4">ייצור פרומפט נוסף (בנוסף למקורי) שמתאים לתמונה שתעלה</div>
+        </div>
+      </label>
+      <div class="ref-box" id="refBox" style="${cd.addRef?'':'display:none'}">
+        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:.5rem">תמונת הרפרנס</label>
+        <label class="btn bs" style="cursor:pointer"><i class="ti ti-photo-up"></i> העלה תמונה<input type="file" accept="image/*" style="display:none" onchange="hRefImg(event)"></label>
+        <img id="refPrev" class="ref-img${cd.refUrl?' show':''}" src="${cd.refUrl||''}" alt="">
+      </div>`;
+    F.innerHTML=`<button class="btn bs" onclick="W.step=2;rwiz()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp bs" onclick="saveRef()">הבא <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 4 – SUMMARY
+  else if(W.step===4){
+    const toSave=Object.entries(W.results).filter(([,v])=>v);
+    B.innerHTML=`
+      <p style="font-size:14px;font-weight:600;margin-bottom:.75rem">✅ מוכן לשמירה – <strong>${toSave.length}</strong> פרומפטים</p>
+      ${toSave.map(([idx,r])=>`
+        <div class="sum-item">
+          <div class="sum-title">${esc(r.title||W.prompts[idx].title)}</div>
+          <div class="sum-badges">
+            ${r.topic?`<span class="badge bt">${esc(r.topic)}</span>`:''}
+            ${r.sub?`<span class="badge bsub">${esc(r.sub)}</span>`:''}
+            ${r.tool?`<span class="badge btool">${esc(r.tool)}</span>`:''}
+            ${r.type&&r.type!=='כללי'?`<span class="badge bneg">${esc(r.type)}</span>`:''}
+            ${r.addRef?`<span class="badge bref"><i class="ti ti-photo" style="font-size:9px"></i> +רפרנס</span>`:''}
+          </div>
+        </div>`).join('')}`;
+    F.innerHTML=`<button class="btn bs" onclick="backClassify()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp bs" onclick="finalSave()"><i class="ti ti-device-floppy"></i> שמור ${toSave.length}</button>`;
+  }
+}
+
+function pickSrc(t){W.srcType=t;if(t==='text'){W.step='text';rwiz()}else{W.step='upload';rwiz()}}
+function hdrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)procFile(f)}
+function hfile(e){const f=e.target.files[0];if(f)procFile(f)}
+
+async function procFile(file){
+  W.step='loading';rwiz();
+  try{
+    if(W.srcType==='image'||file.type.startsWith('image/')){
+      const du=await toDataUrl(file);await sendToAI(null,{b64:du.split(',')[1],mt:file.type||'image/jpeg'});
+    }else{
+      // DOCX: extract text with mammoth, then send to AI
+      await loadMammoth();
+      const buf=await file.arrayBuffer();
+      const res=await mammoth.extractRawText({arrayBuffer:buf});
+      if(!res.value.trim()){throw new Error('הקובץ ריק או לא ניתן לקריאה')}
+      await sendToAI(res.value,null);
+    }
+  }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
+}
+function sendText(){
+  const txt=document.getElementById('pasteTA').value.trim();
+  if(!txt){toast('נא להדביק טקסט');return}
+  W.step='loading';rwiz();
+  sendToAI(txt,null);
+}
+
+async function sendToAI(text,image){
+  const key=getKey();
+  if(!key){toast('הוסף API Key בהגדרות');W.step=0;rwiz();return}
+  const cats=JSON.stringify({topics:D.topics,tools:D.tools});
+  const sys=`You extract prompts AND classify them using existing categories.
+Return ONLY a JSON array, no markdown, no explanation, no code fences:
+[{"title":"short title","content":"full prompt text","suggestions":{"topic":"best matching topic or null","sub":"best matching subtopic or null","tool":"best matching tool or null","type":"כללי|חיובי|שלילי|מערכת","media":"טקסט|תמונה|וידאו|אודיו|קוד"}}]
+Available categories: ${cats}
+Media rules: תמונה for image generation prompts (Midjourney/DALL-E/Flux/Stable Diffusion etc), וידאו for video prompts (Runway/Kling/Sora etc), אודיו for music/sound, קוד for coding, טקסט for everything else.
+Rules: match existing categories when possible. title should be short and descriptive (Hebrew ok).`;
+  const uc=[];
+  if(image){uc.push({type:'image',source:{type:'base64',media_type:image.mt,data:image.b64}});uc.push({type:'text',text:'Extract all prompts from this image. Classify using the provided categories. Return JSON only.'})}
+  else uc.push({type:'text',text:`Extract and classify all prompts:\n\n${text.slice(0,28000)}`});
+  try{
+    const r=await fetch('/api/claude',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:sys,messages:[{role:'user',content:uc}]})
+    });
+    const data=await r.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.find(b=>b.type==='text')?.text||'[]';
+    const clean=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    const parsed=JSON.parse(clean);
+    if(!Array.isArray(parsed)||!parsed.length)throw new Error('לא נמצאו פרומפטים');
+    W.prompts=parsed;W.sel=parsed.map(()=>true);W.results={};W.step=1;rwiz();
+  }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
+}
+
+function togSel(i){W.sel[i]=!W.sel[i];rwiz()}
+function selAll(v){W.sel=W.prompts.map(()=>v);rwiz()}
+function startClassify(){
+  if(!W.sel.some(Boolean)){toast('בחר לפחות פרומפט אחד');return}
+  W.curIdx=W.sel.findIndex(Boolean);
+  const sugg=W.prompts[W.curIdx]?.suggestions||{};
+  W.curData={_suggestions:sugg,topic:sugg.topic&&D.topics.includes(sugg.topic)?sugg.topic:'',sub:'',tool:sugg.tool&&D.tools.includes(sugg.tool)?sugg.tool:'',type:sugg.type||'כללי',title:'',tags:''};
+  W.step=2;rwiz();
+}
+
+// apply AI suggestion
+function applyS(field,val){
+  W.curData[field]=val;
+  const btn=document.getElementById('st-'+field);if(btn)btn.classList.add('applied');
+  if(field==='topic'){W.curData.sub='';document.getElementById('wSub').innerHTML=wSubOpts();document.getElementById('wTopic').value=val}
+  else if(field==='sub'){document.getElementById('wSub').value=val}
+  else if(field==='tool'){document.getElementById('wTool').value=val}
+  else if(field==='type'){document.getElementById('wType').value=val}
+}
+
+function wSubOpts(){const t=W.curData.topic;return`<option value="">ללא</option>`+(D.subs[t]||[]).map(s=>`<option value="${esc(s)}"${W.curData.sub===s?' selected':''}>${esc(s)}</option>`).join('')}
+function onWTopic(){W.curData.topic=document.getElementById('wTopic').value;W.curData.sub='';document.getElementById('wSub').innerHTML=wSubOpts()}
+function addWT(){const v=document.getElementById('wNT').value.trim();if(!v)return;if(!D.topics.includes(v)){D.topics.push(v);D.subs[v]=[];}W.curData.topic=v;sv();rwiz()}
+function addWS(){const v=document.getElementById('wNS').value.trim(),t=document.getElementById('wTopic').value;if(!v||!t)return;if(!D.subs[t])D.subs[t]=[];if(!D.subs[t].includes(v))D.subs[t].push(v);W.curData.sub=v;sv();rwiz()}
+function addWTool(){const v=document.getElementById('wNTool').value.trim();if(!v)return;if(!D.tools.includes(v))D.tools.push(v);W.curData.tool=v;sv();rwiz()}
+
+function collectW(){
+  W.curData.title=document.getElementById('wTi')?.value.trim()||'';
+  W.curData.topic=document.getElementById('wTopic')?.value||'';
+  W.curData.sub=document.getElementById('wSub')?.value||'';
+  W.curData.tool=document.getElementById('wTool')?.value||'';
+  W.curData.type=document.getElementById('wType')?.value||'כללי';
+  W.curData.tags=document.getElementById('wTags')?.value.trim()||'';
+  W.curData.media=document.getElementById('wMedia')?.value||'טקסט';
+}
+function saveCur(){
+  collectW();if(!W.curData.topic){toast('נא לבחור נושא');return}
+  W.results[W.curIdx]={...W.curData};W.step=3;rwiz();
+}
+function skipCur(){
+  const sl=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0),pos=sl.indexOf(W.curIdx);
+  if(pos<sl.length-1){W.curIdx=sl[pos+1];W.curData={...(W.results[W.curIdx]||{_suggestions:W.prompts[W.curIdx]?.suggestions||{}})};W.step=2;rwiz()}
+  else{W.step=4;rwiz()}
+}
+function nextP(){
+  const sl=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0),pos=sl.indexOf(W.curIdx);
+  if(pos<sl.length-1){W.curIdx=sl[pos+1];const sugg=W.prompts[W.curIdx]?.suggestions||{};W.curData=W.results[W.curIdx]||{_suggestions:sugg,topic:sugg.topic&&D.topics.includes(sugg.topic)?sugg.topic:'',sub:'',tool:sugg.tool&&D.tools.includes(sugg.tool)?sugg.tool:'',type:sugg.type||'כללי',media:sugg.media||guessMedia(sugg.tool,''),title:'',tags:''};W.step=2;rwiz()}
+  else{W.step=4;rwiz()}
+}
+function backClassify(){const sl=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0);W.curIdx=sl[sl.length-1];W.curData=W.results[W.curIdx]||{};W.step=2;rwiz()}
+function togRef(){W.curData.addRef=document.getElementById('wRef').checked;document.getElementById('refBox').style.display=W.curData.addRef?'block':'none'}
+function hRefImg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{W.curData.refUrl=ev.target.result;const img=document.getElementById('refPrev');img.src=ev.target.result;img.classList.add('show')};r.readAsDataURL(f)}
+function saveRef(){
+  W.curData.addRef=document.getElementById('wRef')?.checked||false;
+  if(W.curData.addRef&&!W.curData.refUrl){toast('נא להעלות תמונה');return}
+  if(W.results[W.curIdx])Object.assign(W.results[W.curIdx],{addRef:W.curData.addRef,refUrl:W.curData.refUrl});
+  nextP();
+}
+function finalSave(){
+  const toSave=Object.entries(W.results).filter(([,v])=>v);
+  toSave.forEach(([idx,r])=>{
+    const p=W.prompts[idx];
+    const base={id:uid(),title:r.title||p.title,topic:r.topic,sub:r.sub,tool:r.tool,type:r.type,media:r.media||guessMedia(r.tool,p.content),content:p.content,tags:r.tags,created:Date.now()};
+    D.prompts.unshift(base);
+    if(r.addRef&&r.refUrl){D.prompts.unshift({...base,id:uid(),title:base.title+' [+ רפרנס]',content:`[גרסה עם תמונת רפרנס]\n\nהשתמש בתמונה המצורפת כרפרנס לאדם המוצג.\n\n${p.content}`,refImage:r.refUrl,tags:(r.tags?r.tags+',':'')+'רפרנס'})}
+  });
+  sv();renderAll();closeWizard();toast(`🎉 נשמרו ${toSave.length} פרומפטים!`);
+}
+
+function loadMammoth(){return new Promise((res,rej)=>{if(typeof mammoth!=='undefined'){res();return}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+function toDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file)})}
+
+// ─── TREE ─────────────────────────────────────────────────
+const TT={topics:'נושאים',tools:'כלים',types:'סוג פרומפט',neg:'פרומפטים שליליים',media:'סוג מדיה'};
+const TI={'כללי':'ti-file-text','חיובי':'ti-circle-check','שלילי':'ti-circle-x','מערכת':'ti-settings'};
+function cbt(){const m={};D.prompts.forEach(p=>{if(p.topic)m[p.topic]=(m[p.topic]||0)+1});return m}
+function cbts(t){const m={};D.prompts.filter(p=>p.topic===t).forEach(p=>{if(p.sub)m[p.sub]=(m[p.sub]||0)+1});return m}
+function cbtool(){const m={};D.prompts.forEach(p=>{if(p.tool)m[p.tool]=(m[p.tool]||0)+1});return m}
+function cbtype(){const m={};D.prompts.forEach(p=>{const t=p.type||'כללי';m[t]=(m[t]||0)+1});return m}
+function cbneg(){const m={};D.prompts.filter(p=>p.type==='שלילי').forEach(p=>{if(p.topic)m[p.topic]=(m[p.topic]||0)+1});return m}
+function toggleTree(mode){if(treeMode===mode){closeTree();return}treeMode=mode;document.querySelectorAll('.stat').forEach(s=>s.classList.remove('on'));const map={topics:'st-t',tools:'st-tl',types:'st-n',neg:'st-ng'};document.getElementById(map[mode])?.classList.add('on');document.getElementById('treePanel').style.display='block';document.getElementById('treeTitle').textContent=TT[mode];renderTree()}
+function closeTree(){treeMode=null;document.querySelectorAll('.stat').forEach(s=>s.classList.remove('on'));document.getElementById('treePanel').style.display='none'}
+function renderTree(){
+  const cols=document.getElementById('treeCols');
+  if(treeMode==='topics'){
+    const tc=cbt();const all=[...new Set([...Object.keys(tc),...D.topics])];
+    let t='<div class="tc"><div class="tc-h">נושא ראשי</div>';
+    all.forEach(n=>{t+=`<div class="ti${treeSel.topic===n?' on':''}" onclick="tpt('${esc(n)}')"><span><i class="ti ti-folder" style="font-size:11px;margin-left:4px"></i>${esc(n)}</span><span class="cn">${tc[n]||0}</span></div>`});
+    let s='<div class="tc"><div class="tc-h">תת-נושא</div>';
+    if(treeSel.topic){const sc=cbts(treeSel.topic);const ss=[...new Set([...Object.keys(sc),...(D.subs[treeSel.topic]||[])])];if(ss.length)ss.forEach(n=>{s+=`<div class="ti${treeSel.sub===n?' on':''}" onclick="tps('${esc(n)}')"><span>${esc(n)}</span><span class="cn">${sc[n]||0}</span></div>`});else s+='<div class="te">אין תת-נושאים</div>'}else s+='<div class="te">בחר נושא</div>';
+    cols.innerHTML=t+'</div>'+s+'</div>';
+  }else if(treeMode==='tools'){
+    const tc=cbtool();const all=[...new Set([...Object.keys(tc),...D.tools])];
+    let t='<div class="tc"><div class="tc-h">כלי</div>';all.forEach(n=>{t+=`<div class="ti${treeSel.tool===n?' on':''}" onclick="tptool('${esc(n)}')"><span>${esc(n)}</span><span class="cn">${tc[n]||0}</span></div>`});cols.innerHTML=t+'</div>';
+  }else if(treeMode==='types'){
+    const tc=cbtype();let t='<div class="tc"><div class="tc-h">סוג</div>';
+    ['כללי','חיובי','שלילי','מערכת'].forEach(n=>{t+=`<div class="ti${treeSel.type===n?' on':''}" onclick="tptype('${esc(n)}')"><span><i class="ti ${TI[n]}" style="font-size:11px;margin-left:4px"></i>${esc(n)}</span><span class="cn">${tc[n]||0}</span></div>`});cols.innerHTML=t+'</div>';
+  }else if(treeMode==='neg'){
+    const nc=cbneg();let t='<div class="tc"><div class="tc-h">לפי נושא</div>';
+    const en=Object.entries(nc);if(en.length)en.forEach(([n,c])=>{t+=`<div class="ti${treeSel.topic===n&&treeSel.type==='שלילי'?' on':''}" onclick="tpneg('${esc(n)}')"><span><i class="ti ti-circle-x" style="font-size:11px;margin-left:4px;color:var(--red)"></i>${esc(n)}</span><span class="cn">${c}</span></div>`});else t+='<div class="te">אין שליליים עדיין</div>';cols.innerHTML=t+'</div>';
+  }else if(treeMode==='media'){
+    const mc={};D.prompts.forEach(p=>{const m=p.media||'טקסט';mc[m]=(mc[m]||0)+1});
+    let t='<div class="tc"><div class="tc-h">סוג מדיה</div>';
+    ['טקסט','תמונה','וידאו','אודיו','קוד'].forEach(n=>{const c=mc[n]||0;t+=`<div class="ti${treeSel.media===n?' on':''}" onclick="tpmedia('${esc(n)}')"><span>${MEDIA_ICONS[n]||''} ${esc(n)}</span><span class="cn">${c}</span></div>`});
+    cols.innerHTML=t+'</div>';
+  }
+  renderTreeBar();
+}
+function tpt(n){treeSel.topic=treeSel.topic===n?null:n;treeSel.sub=null;applyTree();renderTree()}
+function tps(n){treeSel.sub=treeSel.sub===n?null:n;applyTree();renderTree()}
+function tptool(n){treeSel.tool=treeSel.tool===n?null:n;applyTree();renderTree()}
+function tptype(n){treeSel.type=treeSel.type===n?null:n;applyTree();renderTree()}
+function tpneg(n){treeSel.topic=n;treeSel.type='שלילי';applyTree();renderTree()}
+function tpmedia(n){treeSel.media=treeSel.media===n?null:n;applyTree();renderTree()}
+function applyTree(){
+  document.getElementById('fTopic').value=treeSel.topic||'';
+  document.getElementById('fSub').value=treeSel.sub||'';
+  document.getElementById('fTool').value=treeSel.tool||'';
+  document.getElementById('fType').value=treeSel.type||'';
+  document.getElementById('fMedia').value=treeSel.media||'';
+  renderCards();
+}
+function renderTreeBar(){
+  const bar=document.getElementById('treeBar');
+  const pills=[];
+  if(treeSel.topic)pills.push({l:treeSel.topic,k:'topic',ic:'ti-folder'});
+  if(treeSel.sub)pills.push({l:treeSel.sub,k:'sub',ic:'ti-chevron-left'});
+  if(treeSel.tool)pills.push({l:treeSel.tool,k:'tool',ic:'ti-tool'});
+  if(treeSel.type)pills.push({l:treeSel.type,k:'type',ic:'ti-tag'});
+  if(treeSel.media)pills.push({l:(MEDIA_ICONS[treeSel.media]||'')+' '+treeSel.media,k:'media',ic:''});
+  if(!pills.length){bar.innerHTML='<span class="filter-hint">לחץ על פריט לסינון</span>';return}
+  bar.innerHTML='<span class="filter-hint" style="margin-left:4px">סינון:</span>'+
+    pills.map(p=>`<span class="fpill"><i class="ti ${p.ic}" style="font-size:10px"></i>${esc(p.l)}<button onclick="tclear('${p.k}')"><i class="ti ti-x" style="font-size:10px"></i></button></span>`).join('')+
+    `<button class="fclr" onclick="tclearAll()">נקה</button>`;
+}
+function tclear(k){treeSel[k]=null;if(k==='topic')treeSel.sub=null;applyTree();if(treeMode)renderTree()}
+function tclearAll(){treeSel={topic:null,sub:null,tool:null,type:null,media:null};applyTree();if(treeMode)renderTree()}
+
+// ─── STATS ────────────────────────────────────────────────
+function updateStats(){
+  const tc=[...new Set(D.prompts.map(p=>p.topic).filter(Boolean))].length;
+  const tl=[...new Set(D.prompts.map(p=>p.tool).filter(Boolean))].length;
+  const neg=D.prompts.filter(p=>p.type==='שלילי').length;
+  const img=D.prompts.filter(p=>p.media==='תמונה'||p.media==='וידאו').length;
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat" id="st-t" onclick="toggleTree('topics')"><i class="ti ti-folder"></i><div class="stat-n">${tc}</div><div class="stat-l">נושאים</div></div>
+    <div class="stat" id="st-tl" onclick="toggleTree('tools')"><i class="ti ti-tool"></i><div class="stat-n">${tl}</div><div class="stat-l">כלים</div></div>
+    <div class="stat" id="st-n" onclick="toggleTree('types')"><i class="ti ti-file-text"></i><div class="stat-n">${D.prompts.length}</div><div class="stat-l">פרומפטים</div></div>
+    <div class="stat" id="st-ng" onclick="toggleTree('media')"><div style="font-size:16px;margin-bottom:3px">🖼️</div><div class="stat-n">${img}</div><div class="stat-l">תמונה/וידאו</div></div>`;
+  if(treeMode){const map={topics:'st-t',tools:'st-tl',types:'st-n',neg:'st-ng',media:'st-ng'};document.getElementById(map[treeMode])?.classList.add('on')}
+}
+function updateFilters(){
+  const topics=[...new Set(D.prompts.map(p=>p.topic).filter(Boolean))];
+  const subs=[...new Set(D.prompts.map(p=>p.sub).filter(Boolean))];
+  const tools=[...new Set(D.prompts.map(p=>p.tool).filter(Boolean))];
+  const fT=document.getElementById('fTopic'),fS=document.getElementById('fSub'),fTl=document.getElementById('fTool');
+  const[cv,sv2,tv]=[fT.value,fS.value,fTl.value];
+  fT.innerHTML='<option value="">כל הנושאים</option>'+topics.map(t=>`<option value="${esc(t)}"${t===cv?' selected':''}>${esc(t)}</option>`).join('');
+  fS.innerHTML='<option value="">כל תת-נושאים</option>'+subs.map(s=>`<option value="${esc(s)}"${s===sv2?' selected':''}>${esc(s)}</option>`).join('');
+  fTl.innerHTML='<option value="">כל הכלים</option>'+tools.map(t=>`<option value="${esc(t)}"${t===tv?' selected':''}>${esc(t)}</option>`).join('');
+}
+function onFTopicChange(){const t=document.getElementById('fTopic').value;document.getElementById('fSub').innerHTML='<option value="">כל תת-נושאים</option>'+(t?D.subs[t]||[]:[...new Set(D.prompts.map(p=>p.sub).filter(Boolean))]).map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');renderCards()}
+function tc2(t){return t==='שלילי'?'bneg':t==='חיובי'?'bpos':t==='מערכת'?'bsys':''}
+
+// ── MEDIA ──
+const MEDIA_ICONS={טקסט:'📝',תמונה:'🖼️',וידאו:'🎬',אודיו:'🎵',קוד:'💻'};
+function pickMedia(el){
+  document.querySelectorAll('.media-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('mMedia').value=el.dataset.val;
+}
+function setMediaChip(val){
+  document.querySelectorAll('.media-chip').forEach(c=>{
+    c.classList.toggle('sel',c.dataset.val===(val||'טקסט'));
+  });
+  document.getElementById('mMedia').value=val||'טקסט';
+}
+// Auto-guess media type from tool name
+function guessMedia(tool,content){
+  const t=(tool||'').toLowerCase(),c=(content||'').toLowerCase();
+  if(['midjourney','dall-e','flux','stable diffusion','firefly','ideogram'].some(x=>t.includes(x)))return'תמונה';
+  if(['runway','kling','sora','pika','gen-2','haiper'].some(x=>t.includes(x)))return'וידאו';
+  if(['suno','udio','musicgen'].some(x=>t.includes(x)))return'אודיו';
+  if(c.includes('def ')&&c.includes(':'))return'קוד';
+  if(c.includes('```')||c.includes('function '))return'קוד';
+  return'טקסט';
+}
+
+// ─── CARDS ────────────────────────────────────────────────
+function renderCards(){
+  const q=document.getElementById('qInput').value.toLowerCase();
+  const fT=document.getElementById('fTopic').value,fS=document.getElementById('fSub').value,fTl=document.getElementById('fTool').value,fTy=document.getElementById('fType').value,fMd=document.getElementById('fMedia').value;
+  let list=D.prompts.filter(p=>{
+    if(fT&&p.topic!==fT)return false;if(fS&&p.sub!==fS)return false;
+    if(fTl&&p.tool!==fTl)return false;if(fTy&&p.type!==fTy)return false;
+    if(fMd&&(p.media||'טקסט')!==fMd)return false;
+    if(q){const h=(p.title+p.content+p.topic+p.sub+p.tool+(p.tags||'')).toLowerCase();if(!h.includes(q))return false}
+    return true;
+  }).sort((a,b)=>b.created-a.created);
+  const c=document.getElementById('cardsWrap');
+  if(!list.length){c.innerHTML=`<div class="empty"><i class="ti ti-database-off"></i><p>${D.prompts.length?'לא נמצאו תוצאות':'לחץ <strong>ייבוא AI</strong> או <strong>+</strong> להתחלה'}</p></div>`;return}
+  c.innerHTML=list.map(p=>{
+    const tags=(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+    return`<div class="card">
+      <div class="card-top">
+        <div class="meta">
+          ${p.topic?`<span class="badge bt"><i class="ti ti-folder" style="font-size:10px"></i>${esc(p.topic)}</span>`:''}
+          ${p.sub?`<span class="badge bsub">${esc(p.sub)}</span>`:''}
+          ${p.tool?`<span class="badge btool">${esc(p.tool)}</span>`:''}
+          ${p.type&&p.type!=='כללי'?`<span class="badge ${tc2(p.type)}">${p.type==='שלילי'?'✗':p.type==='חיובי'?'✓':'⚙'} ${esc(p.type)}</span>`:''}
+          ${p.refImage?`<span class="badge bref"><i class="ti ti-photo" style="font-size:10px"></i></span>`:''}
+          ${p.media&&p.media!=='טקסט'?`<span class="badge bmedia">${MEDIA_ICONS[p.media]||''} ${esc(p.media)}</span>`:''}
+        </div>
+        <div class="actions">
+          <button class="btn bico bs" id="cp${p.id}" onclick="copyP('${p.id}')"><i class="ti ti-copy"></i></button>
+          <button class="btn bico bs" onclick="editP('${p.id}')"><i class="ti ti-edit"></i></button>
+          <button class="btn bico bs bd" onclick="delP('${p.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      ${p.refImage?`<img src="${p.refImage}" style="max-height:70px;border-radius:7px;margin-bottom:.4rem;display:block">`:''}
+      ${p.title?`<div class="card-title">${esc(p.title)}</div>`:''}
+      <div class="card-body" id="cb${p.id}">${esc(p.content)}</div>
+      ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag" onclick="stag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`:''}
+      <div class="card-foot">
+        <span>${new Date(p.created).toLocaleDateString('he-IL')}</span>
+        <button class="exp-btn" onclick="exP('${p.id}')">הצג הכל ▾</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exP(id){const b=document.getElementById('cb'+id);const btn=b.closest('.card').querySelector('.exp-btn');btn.textContent=b.classList.toggle('exp')?'הצג פחות ▴':'הצג הכל ▾'}
+function copyP(id){const p=D.prompts.find(x=>x.id===id);if(!p)return;navigator.clipboard.writeText(p.content).then(()=>{const b=document.getElementById('cp'+id);b.classList.add('copied');b.innerHTML='<i class="ti ti-check"></i>';setTimeout(()=>{b.classList.remove('copied');b.innerHTML='<i class="ti ti-copy"></i>'},1400);toast('✓ הועתק!')})}
+function stag(t){document.getElementById('qInput').value=t;renderCards()}
+function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);sv();renderAll();toast('נמחק')}
+// ── ADD WIZARD (manual) ──────────────────────────────────
+let AW={step:0,data:{},editId:null};
+const AW_STEPS=['תוכן','נושא','כלי','מדיה','סוג','פרטים'];
+
+function openModal(){AW={step:0,data:{title:'',topic:'',sub:'',tool:'',type:'כללי',media:'טקסט',content:'',tags:''},editId:null};document.getElementById('addBg').style.display='flex';renderAW()}
+function editP(id){
+  const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  AW={step:0,data:{title:p.title||'',topic:p.topic||'',sub:p.sub||'',tool:p.tool||'',type:p.type||'כללי',media:p.media||guessMedia(p.tool,p.content),content:p.content||'',tags:p.tags||''},editId:id};
+  document.getElementById('addBg').style.display='flex';renderAW();
+}
+function closeModal(){document.getElementById('addBg').style.display='none'}
+function addBgClick(e){if(e.target===document.getElementById('addBg'))closeModal()}
+
+function renderAW(){
+  const prog=document.getElementById('addProg');
+  const body=document.getElementById('addBody');
+  const foot=document.getElementById('addFoot');
+  const isEdit=!!AW.editId;
+
+  // Progress dots
+  prog.innerHTML=`<button class="btn bico bs" onclick="closeModal()" style="margin-left:auto;flex-shrink:0"><i class="ti ti-x"></i></button>
+    <div style="display:flex;gap:5px;align-items:center;flex:1;justify-content:center">
+      ${AW_STEPS.map((_,i)=>`<div class="aw-dot${i<AW.step?' done':i===AW.step?' active':''}"></div>`).join('')}
+    </div>
+    <span style="font-size:12px;color:var(--text3);flex-shrink:0">${AW.step+1}/${AW_STEPS.length}</span>`;
+
+  // STEP 0 – CONTENT
+  if(AW.step===0){
+    body.innerHTML=`
+      <div class="aw-q">${isEdit?'✏️ עריכת פרומפט':'מה הפרומפט?'}</div>
+      <div class="aw-sub">הדבק או כתוב את הפרומפט</div>
+      <textarea id="awContent" style="min-height:160px;font-size:14px" placeholder="הדבק את הפרומפט כאן...">${esc(AW.data.content)}</textarea>`;
+    foot.innerHTML=`<button class="btn bs" onclick="closeModal()">ביטול</button><button class="btn bp" onclick="awNext0()">הבא <i class="ti ti-arrow-left"></i></button>`;
+    setTimeout(()=>document.getElementById('awContent')?.focus(),100);
+  }
+
+  // STEP 1 – TOPIC
+  else if(AW.step===1){
+    const tc=D.topics.map(t=>{
+      const c=D.prompts.filter(p=>p.topic===t).length;
+      return`<div class="aw-step-btn${AW.data.topic===t?' sel':''}" onclick="awPickTopic('${esc(t)}')">
+        <i class="ti ti-folder"></i>
+        <div class="lbl">${esc(t)}</div>
+        ${c?`<div class="sub">${c} פרומפטים</div>`:'<div class="sub">חדש</div>'}
+      </div>`;
+    }).join('');
+    const subs=AW.data.topic?(D.subs[AW.data.topic]||[]):[]; 
+    body.innerHTML=`
+      <div class="aw-q">📁 איזה נושא?</div>
+      <div class="aw-sub">בחר נושא קיים או הוסף חדש</div>
+      <div class="aw-grid-2">${tc}</div>
+      <div class="aw-new-row">
+        <input id="awNTopic" placeholder="נושא חדש..." style="font-size:14px">
+        <button class="btn bp bs" onclick="awAddTopic()"><i class="ti ti-plus"></i> הוסף</button>
+      </div>
+      ${AW.data.topic&&subs.length?`
+        <div style="margin-top:1rem">
+          <div class="aw-q" style="font-size:15px">📂 תת-נושא?</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:.5rem">
+            <div class="aw-step-btn${!AW.data.sub?' sel':''}" style="padding:.5rem .75rem" onclick="AW.data.sub='';renderAW()"><div class="lbl">ללא</div></div>
+            ${subs.map(s=>`<div class="aw-step-btn${AW.data.sub===s?' sel':''}" style="padding:.5rem .75rem" onclick="AW.data.sub='${esc(s)}';renderAW()"><div class="lbl">${esc(s)}</div></div>`).join('')}
+          </div>
+          <div class="aw-new-row">
+            <input id="awNSub" placeholder="תת-נושא חדש..." style="font-size:14px">
+            <button class="btn bp bs" onclick="awAddSub()"><i class="ti ti-plus"></i></button>
+          </div>
+        </div>`:''
+      }`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=0;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awNext1()" ${AW.data.topic?'':'disabled'}>הבא <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 2 – TOOL
+  else if(AW.step===2){
+    const tools=D.tools.map(t=>`<div class="aw-step-btn${AW.data.tool===t?' sel':''}" onclick="AW.data.tool=AW.data.tool==='${esc(t)}'?'':'${esc(t)}';renderAW()">
+      <div class="lbl">${esc(t)}</div></div>`).join('');
+    body.innerHTML=`
+      <div class="aw-q">🔧 לאיזה כלי?</div>
+      <div class="aw-sub">אופציונלי – ניתן לדלג</div>
+      <div class="aw-grid-3">${tools}</div>
+      <div class="aw-new-row">
+        <input id="awNTool" placeholder="כלי חדש..." style="font-size:14px">
+        <button class="btn bp bs" onclick="awAddTool()"><i class="ti ti-plus"></i> הוסף</button>
+      </div>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=1;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=3;renderAW()">הבא <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 3 – MEDIA
+  else if(AW.step===3){
+    const medias=[{v:'טקסט',i:'📝',d:'ChatGPT, Claude'},{v:'תמונה',i:'🖼️',d:'Midjourney, Flux'},{v:'וידאו',i:'🎬',d:'Runway, Kling'},{v:'אודיו',i:'🎵',d:'Suno, Udio'},{v:'קוד',i:'💻',d:'Copilot, Cursor'}];
+    body.innerHTML=`
+      <div class="aw-q">🎨 סוג מדיה?</div>
+      <div class="aw-sub">מה הפלט של הפרומפט הזה?</div>
+      <div class="aw-grid-2">
+        ${medias.map(m=>`<div class="aw-step-btn${AW.data.media===m.v?' sel':''}" onclick="AW.data.media='${m.v}';renderAW()">
+          <i style="font-size:28px;display:block;margin-bottom:.35rem">${m.i}</i>
+          <div class="lbl">${m.v}</div>
+          <div class="sub">${m.d}</div>
+        </div>`).join('')}
+      </div>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=2;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=4;renderAW()">הבא <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 4 – TYPE
+  else if(AW.step===4){
+    const types=[{v:'כללי',i:'ti-file-text',d:'פרומפט רגיל'},{v:'חיובי',i:'ti-circle-check',d:'מה לעשות'},{v:'שלילי',i:'ti-circle-x',d:'מה לא לעשות'},{v:'מערכת',i:'ti-settings',d:'System prompt'}];
+    body.innerHTML=`
+      <div class="aw-q">🏷️ סוג הפרומפט?</div>
+      <div class="aw-sub">האם זה פרומפט חיובי, שלילי או מערכת?</div>
+      <div class="aw-grid-2">
+        ${types.map(t=>`<div class="aw-step-btn${AW.data.type===t.v?' sel':''}" onclick="AW.data.type='${t.v}';renderAW()">
+          <i class="ti ${t.i}"></i>
+          <div class="lbl">${t.v}</div>
+          <div class="sub">${t.d}</div>
+        </div>`).join('')}
+      </div>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=3;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=5;renderAW()">הבא <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 5 – DETAILS + SUMMARY
+  else if(AW.step===5){
+    const MICONS={טקסט:'📝',תמונה:'🖼️',וידאו:'🎬',אודיו:'🎵',קוד:'💻'};
+    body.innerHTML=`
+      <div class="aw-q">✅ כמעט סיימנו!</div>
+      <div class="aw-sub">כותרת ותגיות (אופציונלי)</div>
+      <div class="field" style="margin-bottom:.75rem">
+        <label style="font-size:13px;color:var(--text2);font-weight:500;display:block;margin-bottom:4px">כותרת</label>
+        <input id="awTitle" value="${esc(AW.data.title)}" placeholder="שם קצר לפרומפט..." style="font-size:15px">
+      </div>
+      <div class="field" style="margin-bottom:1rem">
+        <label style="font-size:13px;color:var(--text2);font-weight:500;display:block;margin-bottom:4px">תגיות</label>
+        <input id="awTags" value="${esc(AW.data.tags)}" placeholder="תגית1, תגית2..." style="font-size:15px">
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:.5rem;font-weight:500">סיכום:</div>
+      <div class="aw-badge-row">
+        ${AW.data.topic?`<span class="badge bt"><i class="ti ti-folder" style="font-size:10px"></i>${esc(AW.data.topic)}</span>`:''}
+        ${AW.data.sub?`<span class="badge bs2">${esc(AW.data.sub)}</span>`:''}
+        ${AW.data.tool?`<span class="badge btool">${esc(AW.data.tool)}</span>`:''}
+        ${AW.data.type!=='כללי'?`<span class="badge bneg">${esc(AW.data.type)}</span>`:''}
+        <span class="badge" style="background:var(--bg3);color:var(--text2)">${MICONS[AW.data.media]||''} ${esc(AW.data.media)}</span>
+      </div>
+      <div class="aw-preview" id="awPrev" onclick="this.classList.toggle('exp')">${esc(AW.data.content.slice(0,200))}${AW.data.content.length>200?'...':''}</div>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=4;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awSave()"><i class="ti ti-check"></i> ${isEdit?'עדכן':'שמור'}</button>`;
+    setTimeout(()=>document.getElementById('awTitle')?.focus(),100);
+  }
+}
+
+function awNext0(){
+  const c=document.getElementById('awContent')?.value.trim();
+  if(!c){toast('נא להזין תוכן');return}
+  AW.data.content=c;
+  // Auto-guess media if not set
+  if(!AW.data.media||AW.data.media==='טקסט') AW.data.media=guessMedia(AW.data.tool,c);
+  AW.step=1;renderAW();
+}
+function awNext1(){
+  if(!AW.data.topic){toast('נא לבחור נושא');return}
+  AW.step=2;renderAW();
+}
+function awPickTopic(t){AW.data.topic=AW.data.topic===t?'':t;AW.data.sub='';renderAW()}
+function awAddTopic(){
+  const v=document.getElementById('awNTopic')?.value.trim();if(!v)return;
+  if(!D.topics.includes(v)){D.topics.push(v);D.subs[v]=[];}
+  AW.data.topic=v;AW.data.sub='';sv();renderAW();
+}
+function awAddSub(){
+  const v=document.getElementById('awNSub')?.value.trim();if(!v||!AW.data.topic)return;
+  if(!D.subs[AW.data.topic])D.subs[AW.data.topic]=[];
+  if(!D.subs[AW.data.topic].includes(v))D.subs[AW.data.topic].push(v);
+  AW.data.sub=v;sv();renderAW();
+}
+function awAddTool(){
+  const v=document.getElementById('awNTool')?.value.trim();if(!v)return;
+  if(!D.tools.includes(v))D.tools.push(v);
+  AW.data.tool=v;sv();renderAW();
+}
+function awSave(){
+  AW.data.title=document.getElementById('awTitle')?.value.trim()||'';
+  AW.data.tags=document.getElementById('awTags')?.value.trim()||'';
+  const obj={
+    id:AW.editId||uid(),
+    title:AW.data.title,topic:AW.data.topic,sub:AW.data.sub,
+    tool:AW.data.tool,type:AW.data.type,media:AW.data.media,
+    content:AW.data.content,tags:AW.data.tags,
+    created:AW.editId?(D.prompts.find(p=>p.id===AW.editId)?.created||Date.now()):Date.now()
+  };
+  if(AW.editId){const i=D.prompts.findIndex(p=>p.id===AW.editId);if(i>-1)D.prompts[i]=obj}
+  else D.prompts.unshift(obj);
+  sv();closeModal();renderAll();toast(AW.editId?'✓ עודכן':'✓ נשמר 🎉');
+}
+
+// keep old functions for AI wizard compatibility
+function popSel(){}
+function onMTopic(){}
+function addMTopic(){}
+function addMSub(){}
+function addMTool(){}
+function savePrompt(){}
+function mbgClick(){}
+function pickMedia(){}
+function setMediaChip(){}
+function exportData(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='prompthub.json';a.click();toast('✓ יוצא')}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);sv();renderAll();toast(`✓ יובאו ${D.prompts.length} פרומפטים`)}catch(er){toast('שגיאה בקובץ')}};r.readAsText(f)}
+function renderAll(){updateStats();updateFilters();renderCards();if(treeMode)renderTree();checkBanner()}
+
+window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
+
+ld();renderAll();
+</script>
+</body>
+</html>
