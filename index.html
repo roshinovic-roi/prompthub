@@ -624,12 +624,11 @@ async function procFile(file){
     if(W.srcType==='image'||file.type.startsWith('image/')){
       const du=await toDataUrl(file);await sendToAI(null,{b64:du.split(',')[1],mt:file.type||'image/jpeg'});
     }else{
-      // DOCX: extract text with mammoth, then send to AI
       await loadMammoth();
       const buf=await file.arrayBuffer();
       const res=await mammoth.extractRawText({arrayBuffer:buf});
       if(!res.value.trim()){throw new Error('הקובץ ריק או לא ניתן לקריאה')}
-      await sendToAI(res.value,null);
+      await sendTextChunked(res.value);
     }
   }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
 }
@@ -637,7 +636,57 @@ function sendText(){
   const txt=document.getElementById('pasteTA').value.trim();
   if(!txt){toast('נא להדביק טקסט');return}
   W.step='loading';rwiz();
-  sendToAI(txt,null);
+  sendTextChunked(txt);
+}
+
+// Split large text into chunks and merge results
+async function sendTextChunked(text){
+  const CHUNK=12000; // chars per chunk
+  if(text.length<=CHUNK){await sendToAI(text,null);return}
+  // Split on double newline to avoid cutting mid-prompt
+  const parts=[];
+  let start=0;
+  while(start<text.length){
+    let end=Math.min(start+CHUNK,text.length);
+    if(end<text.length){
+      const cut=text.lastIndexOf('\n\n',end);
+      if(cut>start+2000)end=cut;
+    }
+    parts.push(text.slice(start,end));
+    start=end;
+  }
+  const allPrompts=[];
+  for(let i=0;i<parts.length;i++){
+    toast(`מנתח חלק ${i+1} מתוך ${parts.length}...`,3000);
+    const result=await sendToAIChunk(parts[i]);
+    if(result)allPrompts.push(...result);
+  }
+  if(!allPrompts.length){toast('לא נמצאו פרומפטים');W.step='upload';rwiz();return}
+  W.prompts=allPrompts;W.sel=allPrompts.map(()=>true);W.results={};W.step=1;rwiz();
+}
+
+async function sendToAIChunk(text){
+  const key=getKey();
+  if(!key)return null;
+  const cats=JSON.stringify({topics:D.topics,tools:D.tools});
+  const sys=`You extract prompts AND classify them using existing categories.
+Return ONLY a JSON array, no markdown, no explanation, no code fences:
+[{"title":"short title","content":"full prompt text","suggestions":{"topic":"best matching topic or null","sub":"best matching subtopic or null","tool":"best matching tool or null","type":"כללי|חיובי|שלילי|מערכת","media":"טקסט|תמונה|וידאו|אודיו|קוד"}}]
+Available categories: ${cats}
+Media rules: תמונה for image generation (Midjourney/DALL-E/Flux/SD), וידאו for video (Runway/Kling/Sora), אודיו for music, קוד for coding, טקסט for everything else.
+Rules: match existing categories when possible. title should be short (Hebrew ok). Return empty array [] if no prompts found.`;
+  try{
+    const r=await fetch('/api/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:6000,system:sys,messages:[{role:'user',content:[{type:'text',text:`Extract and classify all prompts:\n\n${text}`}]}]})
+    });
+    const data=await r.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.find(b=>b.type==='text')?.text||'[]';
+    const clean=raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    return JSON.parse(clean);
+  }catch(err){console.error('Chunk error:',err.message);return[]}
 }
 
 async function sendToAI(text,image){
@@ -648,19 +697,16 @@ async function sendToAI(text,image){
 Return ONLY a JSON array, no markdown, no explanation, no code fences:
 [{"title":"short title","content":"full prompt text","suggestions":{"topic":"best matching topic or null","sub":"best matching subtopic or null","tool":"best matching tool or null","type":"כללי|חיובי|שלילי|מערכת","media":"טקסט|תמונה|וידאו|אודיו|קוד"}}]
 Available categories: ${cats}
-Media rules: תמונה for image generation prompts (Midjourney/DALL-E/Flux/Stable Diffusion etc), וידאו for video prompts (Runway/Kling/Sora etc), אודיו for music/sound, קוד for coding, טקסט for everything else.
-Rules: match existing categories when possible. title should be short and descriptive (Hebrew ok).`;
+Media rules: תמונה for image generation (Midjourney/DALL-E/Flux/SD), וידאו for video (Runway/Kling/Sora), אודיו for music, קוד for coding, טקסט for everything else.
+Rules: match existing categories when possible. title should be short (Hebrew ok).`;
   const uc=[];
   if(image){uc.push({type:'image',source:{type:'base64',media_type:image.mt,data:image.b64}});uc.push({type:'text',text:'Extract all prompts from this image. Classify using the provided categories. Return JSON only.'})}
-  else uc.push({type:'text',text:`Extract and classify all prompts:\n\n${text.slice(0,28000)}`});
+  else uc.push({type:'text',text:`Extract and classify all prompts:\n\n${text.slice(0,12000)}`});
   try{
     const r=await fetch('/api/claude',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':key
-      },
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:sys,messages:[{role:'user',content:uc}]})
+      headers:{'Content-Type':'application/json','x-api-key':key},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:6000,system:sys,messages:[{role:'user',content:uc}]})
     });
     const data=await r.json();
     if(data.error)throw new Error(data.error.message);
