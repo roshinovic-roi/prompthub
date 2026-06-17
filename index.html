@@ -670,13 +670,11 @@ Rules: match existing categories when possible. title should be short and descri
   if(image){uc.push({type:'image',source:{type:'base64',media_type:image.mt,data:image.b64}});uc.push({type:'text',text:'Extract all prompts from this image. Classify using the provided categories. Return JSON only.'})}
   else uc.push({type:'text',text:`Extract and classify all prompts:\n\n${text.slice(0,28000)}`});
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
+    const r=await fetch('/api/claude',{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'x-api-key':key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-calls':'true'
+        'x-api-key':key
       },
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,system:sys,messages:[{role:'user',content:uc}]})
     });
