@@ -373,7 +373,28 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 
 <div class="toast" id="toast"></div>
 
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--bg2);display:flex;align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:12px">
+  <div style="font-size:36px;animation:sp 1s linear infinite"><i class="ti ti-loader-2" style="color:var(--purple)"></i></div>
+  <div style="font-size:15px;font-weight:600;color:var(--text)">טוען פרומפטים...</div>
+  <div style="font-size:13px;color:var(--text3)">מתחבר ל-Supabase</div>
+</div>
+
 <script>
+// ─── SUPABASE CONFIG ──────────────────────────────────────
+const SB_URL='https://ezppnixdvsibmmokfzrb.supabase.co';
+const SB_KEY='sb_publishable_Yf5IO7cbJD2-f6HdIOoCmA_AUP36Wcd';
+
+async function sbFetch(path,opts={}){
+  const r=await fetch(SB_URL+path,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  if(!r.ok){const e=await r.text();throw new Error(e)}
+  const t=r.status===204?'[]':await r.text();
+  return t?JSON.parse(t):[];
+}
+
 const SK='prompthub_v3';
 let D={
   prompts:[],
@@ -386,8 +407,81 @@ let editId=null,treeMode=null,treeSel={topic:null,sub:null,tool:null,type:null,m
 // WIZARD STATE
 let W={step:0,srcType:'',prompts:[],sel:[],curIdx:0,results:{},curData:{}};
 
-function ld(){try{const s=localStorage.getItem(SK);if(s)D=JSON.parse(s)}catch(e){}}
-function sv(){localStorage.setItem(SK,JSON.stringify(D))}
+// ─── SUPABASE ROW ↔ LOCAL OBJECT ─────────────────────────
+function rowToPrompt(r){
+  const extra=r.extra||{};
+  return{
+    id:r.id,
+    title:r.title||'',
+    content:r.content||'',
+    topic:r.topic||'',
+    sub:r.subtopic||'',
+    tool:r.tool||'',
+    type:r.type||'כללי',
+    media:r.media_type||'טקסט',
+    tags:Array.isArray(r.tags)?r.tags.join(', '):(r.tags||''),
+    created:r.created_at?new Date(r.created_at).getTime():Date.now(),
+    refImage:extra.refImage||null
+  };
+}
+function promptToRow(p){
+  return{
+    id:p.id&&p.id.length>10?p.id:undefined,
+    title:p.title||null,
+    content:p.content||'',
+    topic:p.topic||null,
+    subtopic:p.sub||null,
+    tool:p.tool||null,
+    type:p.type||'כללי',
+    media_type:p.media||'טקסט',
+    tags:p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):null,
+    extra:p.refImage?{refImage:p.refImage}:null
+  };
+}
+
+// ─── LOAD ────────────────────────────────────────────────
+async function ld(){
+  // Load meta from localStorage
+  try{const s=localStorage.getItem(SK+'_meta');if(s){const m=JSON.parse(s);D.topics=m.topics||D.topics;D.subs=m.subs||D.subs;D.tools=m.tools||D.tools}}catch(e){}
+  // Load prompts from Supabase
+  try{
+    document.getElementById('loadingOverlay').style.display='flex';
+    const rows=await sbFetch('/rest/v1/prompts?select=*&order=created_at.desc');
+    D.prompts=rows.map(rowToPrompt);
+    document.getElementById('loadingOverlay').style.display='none';
+  }catch(e){
+    document.getElementById('loadingOverlay').style.display='none';
+    console.error('Load error:',e);
+    // fallback to localStorage
+    try{const s=localStorage.getItem(SK);if(s){const old=JSON.parse(s);D.prompts=old.prompts||[]}}catch(e2){}
+  }
+}
+
+// ─── SAVE META (topics/subs/tools to localStorage) ──────
+function svMeta(){localStorage.setItem(SK+'_meta',JSON.stringify({topics:D.topics,subs:D.subs,tools:D.tools}))}
+
+// ─── SAVE PROMPT TO SUPABASE ────────────────────────────
+async function svPrompt(p){
+  const row=promptToRow(p);
+  const isNew=!p.id||p.id.length<=10;
+  if(isNew){delete row.id}
+  try{
+    if(isNew){
+      const res=await sbFetch('/rest/v1/prompts',{method:'POST',body:JSON.stringify(row)});
+      if(res&&res[0])p.id=res[0].id;
+    }else{
+      await sbFetch('/rest/v1/prompts?id=eq.'+p.id,{method:'PATCH',body:JSON.stringify(row)});
+    }
+  }catch(e){console.error('Save error:',e);toast('שגיאת שמירה: '+e.message)}
+}
+
+// ─── DELETE FROM SUPABASE ────────────────────────────────
+async function delFromSB(id){
+  try{await sbFetch('/rest/v1/prompts?id=eq.'+id,{method:'DELETE',headers:{Prefer:''}})}catch(e){console.error('Delete error:',e)}
+}
+
+// sv() — kept for meta only
+function sv(){svMeta()}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
@@ -740,9 +834,9 @@ function applyS(field,val){
 
 function wSubOpts(){const t=W.curData.topic;return`<option value="">ללא</option>`+(D.subs[t]||[]).map(s=>`<option value="${esc(s)}"${W.curData.sub===s?' selected':''}>${esc(s)}</option>`).join('')}
 function onWTopic(){W.curData.topic=document.getElementById('wTopic').value;W.curData.sub='';document.getElementById('wSub').innerHTML=wSubOpts()}
-function addWT(){const v=document.getElementById('wNT').value.trim();if(!v)return;if(!D.topics.includes(v)){D.topics.push(v);D.subs[v]=[];}W.curData.topic=v;sv();rwiz()}
-function addWS(){const v=document.getElementById('wNS').value.trim(),t=document.getElementById('wTopic').value;if(!v||!t)return;if(!D.subs[t])D.subs[t]=[];if(!D.subs[t].includes(v))D.subs[t].push(v);W.curData.sub=v;sv();rwiz()}
-function addWTool(){const v=document.getElementById('wNTool').value.trim();if(!v)return;if(!D.tools.includes(v))D.tools.push(v);W.curData.tool=v;sv();rwiz()}
+function addWT(){const v=document.getElementById('wNT').value.trim();if(!v)return;if(!D.topics.includes(v)){D.topics.push(v);D.subs[v]=[];}W.curData.topic=v;W.curData.sub='';svMeta();rwiz()}
+function addWS(){const v=document.getElementById('wNS').value.trim(),t=document.getElementById('wTopic').value;if(!v||!t)return;if(!D.subs[t])D.subs[t]=[];if(!D.subs[t].includes(v))D.subs[t].push(v);W.curData.sub=v;svMeta();rwiz()}
+function addWTool(){const v=document.getElementById('wNTool').value.trim();if(!v)return;if(!D.tools.includes(v))D.tools.push(v);W.curData.tool=v;svMeta();rwiz()}
 
 function collectW(){
   W.curData.title=document.getElementById('wTi')?.value.trim()||'';
@@ -776,15 +870,18 @@ function saveRef(){
   if(W.results[W.curIdx])Object.assign(W.results[W.curIdx],{addRef:W.curData.addRef,refUrl:W.curData.refUrl});
   nextP();
 }
-function finalSave(){
+async function finalSave(){
   const toSave=Object.entries(W.results).filter(([,v])=>v);
+  const newPrompts=[];
   toSave.forEach(([idx,r])=>{
     const p=W.prompts[idx];
     const base={id:uid(),title:r.title||p.title,topic:r.topic,sub:r.sub,tool:r.tool,type:r.type,media:r.media||guessMedia(r.tool,p.content),content:p.content,tags:r.tags,created:Date.now()};
+    newPrompts.push(base);
     D.prompts.unshift(base);
-    if(r.addRef&&r.refUrl){D.prompts.unshift({...base,id:uid(),title:base.title+' [+ רפרנס]',content:`[גרסה עם תמונת רפרנס]\n\nהשתמש בתמונה המצורפת כרפרנס לאדם המוצג.\n\n${p.content}`,refImage:r.refUrl,tags:(r.tags?r.tags+',':'')+'רפרנס'})}
+    if(r.addRef&&r.refUrl){const ref={...base,id:uid(),title:base.title+' [+ רפרנס]',content:`[גרסה עם תמונת רפרנס]\n\nהשתמש בתמונה המצורפת כרפרנס לאדם המוצג.\n\n${p.content}`,refImage:r.refUrl,tags:(r.tags?r.tags+',':'')+'רפרנס'};newPrompts.push(ref);D.prompts.unshift(ref)}
   });
-  sv();renderAll();closeWizard();toast(`🎉 נשמרו ${toSave.length} פרומפטים!`);
+  svMeta();renderAll();closeWizard();toast(`🎉 נשמרו ${toSave.length} פרומפטים!`);
+  for(const p of newPrompts)await svPrompt(p);
 }
 
 function loadMammoth(){return new Promise((res,rej)=>{if(typeof mammoth!=='undefined'){res();return}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
@@ -952,7 +1049,7 @@ function renderCards(){
 function exP(id){const b=document.getElementById('cb'+id);const btn=b.closest('.card').querySelector('.exp-btn');btn.textContent=b.classList.toggle('exp')?'הצג פחות ▴':'הצג הכל ▾'}
 function copyP(id){const p=D.prompts.find(x=>x.id===id);if(!p)return;navigator.clipboard.writeText(p.content).then(()=>{const b=document.getElementById('cp'+id);b.classList.add('copied');b.innerHTML='<i class="ti ti-check"></i>';setTimeout(()=>{b.classList.remove('copied');b.innerHTML='<i class="ti ti-copy"></i>'},1400);toast('✓ הועתק!')})}
 function stag(t){document.getElementById('qInput').value=t;renderCards()}
-function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);sv();renderAll();toast('נמחק')}
+function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);renderAll();toast('נמחק');delFromSB(id)}
 // ── ADD WIZARD (manual) ──────────────────────────────────
 let AW={step:0,data:{},editId:null};
 const AW_STEPS=['תוכן','נושא','כלי','מדיה','סוג','פרטים'];
@@ -1115,20 +1212,20 @@ function awPickTopic(t){AW.data.topic=AW.data.topic===t?'':t;AW.data.sub='';rend
 function awAddTopic(){
   const v=document.getElementById('awNTopic')?.value.trim();if(!v)return;
   if(!D.topics.includes(v)){D.topics.push(v);D.subs[v]=[];}
-  AW.data.topic=v;AW.data.sub='';sv();renderAW();
+  AW.data.topic=v;AW.data.sub='';svMeta();renderAW();
 }
 function awAddSub(){
   const v=document.getElementById('awNSub')?.value.trim();if(!v||!AW.data.topic)return;
   if(!D.subs[AW.data.topic])D.subs[AW.data.topic]=[];
   if(!D.subs[AW.data.topic].includes(v))D.subs[AW.data.topic].push(v);
-  AW.data.sub=v;sv();renderAW();
+  AW.data.sub=v;svMeta();renderAW();
 }
 function awAddTool(){
   const v=document.getElementById('awNTool')?.value.trim();if(!v)return;
   if(!D.tools.includes(v))D.tools.push(v);
-  AW.data.tool=v;sv();renderAW();
+  AW.data.tool=v;svMeta();renderAW();
 }
-function awSave(){
+async function awSave(){
   AW.data.title=document.getElementById('awTitle')?.value.trim()||'';
   AW.data.tags=document.getElementById('awTags')?.value.trim()||'';
   const obj={
@@ -1140,7 +1237,8 @@ function awSave(){
   };
   if(AW.editId){const i=D.prompts.findIndex(p=>p.id===AW.editId);if(i>-1)D.prompts[i]=obj}
   else D.prompts.unshift(obj);
-  sv();closeModal();renderAll();toast(AW.editId?'✓ עודכן':'✓ נשמר 🎉');
+  svMeta();closeModal();renderAll();toast(AW.editId?'✓ עודכן':'✓ נשמר 🎉');
+  svPrompt(obj);
 }
 
 // keep old functions for AI wizard compatibility
@@ -1154,12 +1252,12 @@ function mbgClick(){}
 function pickMedia(){}
 function setMediaChip(){}
 function exportData(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='prompthub.json';a.click();toast('✓ יוצא')}
-function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);sv();renderAll();toast(`✓ יובאו ${D.prompts.length} פרומפטים`)}catch(er){toast('שגיאה בקובץ')}};r.readAsText(f)}
+async function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async ev=>{try{const imp=JSON.parse(ev.target.result);const ps=imp.prompts||[];toast(`מייבא ${ps.length} פרומפטים...`);for(const p of ps){D.prompts.unshift(p);await svPrompt(p)}if(imp.topics)D.topics=imp.topics;if(imp.subs)D.subs=imp.subs;if(imp.tools)D.tools=imp.tools;svMeta();renderAll();toast(`✓ יובאו ${ps.length} פרומפטים`)}catch(er){toast('שגיאה בקובץ')}};r.readAsText(f)}
 function renderAll(){updateStats();updateFilters();renderCards();if(treeMode)renderTree();checkBanner()}
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
 
-ld();renderAll();
+ld().then(()=>renderAll());
 </script>
 </body>
 </html>
