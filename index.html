@@ -560,7 +560,7 @@ function rwiz(){
         <p>${isImg?'בחר תמונה מהגלריה':'גרור קובץ לכאן'}</p>
         <small>${isImg?'JPG · PNG · WEBP · צילום מסך':'לחץ לבחירה'}</small>
       </div>
-      <input type="file" id="dzIn" accept="${isImg?'image/*':W.srcType==='pdf'?'.pdf':'.docx'}" ${isImg?'capture="environment"':''} style="display:none" onchange="hfile(event)">`;
+      <input type="file" id="dzIn" accept="${isImg?'image/*':W.srcType==='pdf'?'.pdf':'.docx'}" style="display:none" onchange="hfile(event)">`;
     F.innerHTML=`<button class="btn bs" onclick="W.step=0;rwiz()"><i class="ti ti-arrow-right"></i> חזור</button><span></span>`;
   }
 
