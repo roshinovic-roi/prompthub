@@ -386,12 +386,13 @@ const SB_URL='https://ezppnixdvsibmmokfzrb.supabase.co';
 const SB_KEY='sb_publishable_Yf5IO7cbJD2-f6HdIOoCmA_AUP36Wcd';
 
 async function sbFetch(path,opts={}){
-  const r=await fetch(SB_URL+path,{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
-    ...opts
-  });
-  if(!r.ok){const e=await r.text();throw new Error(e)}
-  const t=r.status===204?'[]':await r.text();
+  const hdrs={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+  if(opts.method!=='DELETE')hdrs['Prefer']='return=representation';
+  Object.assign(hdrs,opts.headers||{});
+  const r=await fetch(SB_URL+path,{...opts,headers:hdrs});
+  if(!r.ok){const e=await r.text();console.error('SB error:',r.status,e);throw new Error(r.status+': '+e)}
+  if(r.status===204)return[];
+  const t=await r.text();
   return t?JSON.parse(t):[];
 }
 
@@ -463,14 +464,15 @@ function svMeta(){localStorage.setItem(SK+'_meta',JSON.stringify({topics:D.topic
 // ─── SAVE PROMPT TO SUPABASE ────────────────────────────
 async function svPrompt(p){
   const row=promptToRow(p);
-  const isNew=!p.id||p.id.length<=10;
-  if(isNew){delete row.id}
+  const uuidRx=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const isNew=!p.id||!uuidRx.test(p.id);
+  if(isNew)delete row.id;
   try{
     if(isNew){
       const res=await sbFetch('/rest/v1/prompts',{method:'POST',body:JSON.stringify(row)});
       if(res&&res[0])p.id=res[0].id;
     }else{
-      await sbFetch('/rest/v1/prompts?id=eq.'+p.id,{method:'PATCH',body:JSON.stringify(row)});
+      await sbFetch('/rest/v1/prompts?id=eq.'+encodeURIComponent(p.id),{method:'PATCH',body:JSON.stringify(row)});
     }
   }catch(e){console.error('Save error:',e);toast('שגיאת שמירה: '+e.message)}
 }
@@ -482,7 +484,7 @@ async function delFromSB(id){
 
 // sv() — kept for meta only
 function sv(){svMeta()}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function uid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16)})}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
 function getKey(){return localStorage.getItem('ph_key')||''}
