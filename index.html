@@ -464,17 +464,29 @@ function svMeta(){localStorage.setItem(SK+'_meta',JSON.stringify({topics:D.topic
 // ─── SAVE PROMPT TO SUPABASE ────────────────────────────
 async function svPrompt(p){
   const row=promptToRow(p);
-  const uuidRx=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const isNew=!p.id||!uuidRx.test(p.id);
-  if(isNew)delete row.id;
+  // always let Supabase generate the id
+  delete row.id;
   try{
-    if(isNew){
-      const res=await sbFetch('/rest/v1/prompts',{method:'POST',body:JSON.stringify(row)});
-      if(res&&res[0])p.id=res[0].id;
-    }else{
-      await sbFetch('/rest/v1/prompts?id=eq.'+encodeURIComponent(p.id),{method:'PATCH',body:JSON.stringify(row)});
+    const res=await fetch(SB_URL+'/rest/v1/prompts',{
+      method:'POST',
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+SB_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'return=representation'
+      },
+      body:JSON.stringify(row)
+    });
+    if(!res.ok){
+      const e=await res.text();
+      console.error('svPrompt error:',res.status,e);
+      toast('שגיאת שמירה '+res.status);
+      return;
     }
-  }catch(e){console.error('Save error:',e);toast('שגיאת שמירה: '+e.message)}
+    const data=await res.json();
+    if(data&&data[0])p.id=data[0].id;
+    console.log('Saved to Supabase:',p.id);
+  }catch(e){console.error('svPrompt catch:',e);toast('שגיאת שמירה: '+e.message)}
 }
 
 // ─── DELETE FROM SUPABASE ────────────────────────────────
