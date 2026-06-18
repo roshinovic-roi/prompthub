@@ -488,7 +488,26 @@ function uid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
 function getKey(){return localStorage.getItem('ph_key')||''}
-function saveKey(){const k=document.getElementById('apiKey').value.trim();localStorage.setItem('ph_key',k);renderKeySt();toast('✓ API Key נשמר');checkBanner()}
+async function saveKey(){
+  const k=document.getElementById('apiKey').value.trim();
+  localStorage.setItem('ph_key',k);
+  try{
+    await sbFetch('/rest/v1/settings',{method:'POST',body:JSON.stringify({key:'api_key',value:k}),
+      headers:{'Prefer':'resolution=merge-duplicates,return=representation'}});
+  }catch(e){console.error('saveKey SB error:',e)}
+  renderKeySt();toast('✓ API Key נשמר');checkBanner();
+}
+async function loadKeyFromSB(){
+  try{
+    const rows=await sbFetch('/rest/v1/settings?key=eq.api_key&select=value');
+    if(rows&&rows[0]&&rows[0].value){
+      localStorage.setItem('ph_key',rows[0].value);
+      const el=document.getElementById('apiKey');
+      if(el)el.value=rows[0].value;
+      renderKeySt();checkBanner();
+    }
+  }catch(e){console.error('loadKey SB error:',e)}
+}
 function checkKeyInput(){}
 function renderKeySt(){
   const k=getKey(),el=document.getElementById('keySt');if(!el)return;
@@ -1259,7 +1278,7 @@ function renderAll(){updateStats();updateFilters();renderCards();if(treeMode)ren
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
 
-ld().then(()=>renderAll());
+ld().then(()=>{renderAll();loadKeyFromSB();});
 </script>
 </body>
 </html>
