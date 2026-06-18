@@ -626,8 +626,8 @@ function rwiz(){
           <div class="wiz-item${W.sel[i]?' on':''}" onclick="togSel(${i})">
             <input type="checkbox" class="wiz-cb" ${W.sel[i]?'checked':''} onclick="event.stopPropagation();togSel(${i})">
             <div style="min-width:0;flex:1">
-              <div class="wiz-t">${esc(p.title)}</div>
-              <div class="wiz-p">${esc(p.content.slice(0,85))}...</div>
+              <div class="wiz-t">${esc(p.content.slice(0,50))}${p.content.length>50?'...':''}</div>
+              <div class="wiz-p">${esc(p.content.slice(50,130))}...</div>
             </div>
           </div>`).join('')}
       </div>
@@ -672,7 +672,7 @@ function rwiz(){
     const p=W.prompts[W.curIdx];const cd=W.curData;
     B.innerHTML=`
       <p style="font-size:14px;font-weight:600;margin-bottom:.35rem">תמונת רפרנס</p>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:.85rem">לפרומפט: <em>${esc((cd.title||p.title).slice(0,40))}</em></p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.85rem">לפרומפט: <em>${esc(W.prompts[W.curIdx].content.slice(0,40))}...</em></p>
       <label class="ref-row">
         <input type="checkbox" id="wRef" ${cd.addRef?'checked':''} onchange="togRef()">
         <div>
@@ -829,7 +829,8 @@ function collectW(){
 }
 function saveCur(){
   collectW();
-  W.results[W.curIdx]={...W.curData};W.step=3;rwiz();
+  W.results[W.curIdx]={...W.curData};
+  nextP();
 }
 function skipCur(){
   const sl=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0),pos=sl.indexOf(W.curIdx);
