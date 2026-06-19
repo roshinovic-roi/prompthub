@@ -888,6 +888,23 @@ async function finalSave(){
 function loadMammoth(){return new Promise((res,rej)=>{if(typeof mammoth!=='undefined'){res();return}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
 function toDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file)})}
 
+async function uploadImgToStorage(file,oldUrl){
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const res=await fetch(`${SB_URL}/storage/v1/object/prompt-images/${path}`,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type||'image/jpeg'},
+    body:file
+  });
+  if(!res.ok){const e=await res.text();throw new Error('Storage upload failed: '+res.status+' '+e)}
+  // Delete old image from storage if replacing (best-effort, don't block)
+  if(oldUrl&&oldUrl.includes('/storage/v1/object/public/prompt-images/')){
+    const oldPath=oldUrl.split('/prompt-images/')[1];
+    if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+  }
+  return `${SB_URL}/storage/v1/object/public/prompt-images/${path}`;
+}
+
 // ─── TREE ─────────────────────────────────────────────────
 const TT={topics:'נושאים',tools:'כלים',types:'סוג פרומפט',neg:'פרומפטים שליליים',media:'סוג מדיה'};
 const TI={'כללי':'ti-file-text','חיובי':'ti-circle-check','שלילי':'ti-circle-x','מערכת':'ti-settings'};
@@ -1053,20 +1070,28 @@ function exP(id){const b=document.getElementById('cb'+id);const btn=b.closest('.
 function copyP(id){const p=D.prompts.find(x=>x.id===id);if(!p)return;navigator.clipboard.writeText(p.content).then(()=>{const b=document.getElementById('cp'+id);if(!b)return;const orig=b.innerHTML;b.classList.add('copied');b.innerHTML='<i class="ti ti-check"></i> הועתק!';setTimeout(()=>{b.classList.remove('copied');b.innerHTML=orig},1400);toast('✓ הועתק!')})}
 async function quickImg(e,id){
   const f=e.target.files[0];if(!f)return;
-  if(f.size>5*1024*1024){toast('התמונה גדולה מ-5MB');return}
-  const du=await toDataUrl(f);
+  if(f.size>20*1024*1024){toast('התמונה גדולה מ-20MB');return}
   const p=D.prompts.find(x=>x.id===id);if(!p)return;
-  p.refImage=du;
-  renderCards();
-  toast('✓ תמונה עודכנה');
-  svPrompt(p);
+  toast('מעלה תמונה...');
+  try{
+    const url=await uploadImgToStorage(f,p.refImage);
+    p.refImage=url;
+    renderCards();
+    toast('✓ תמונה עודכנה');
+    svPrompt(p);
+  }catch(err){console.error(err);toast('שגיאת העלאה: '+err.message)}
 }
 function rmImg(id){
   const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  const oldUrl=p.refImage;
   p.refImage=null;
   renderCards();
   toast('הוסרה תמונה');
   svPrompt(p);
+  if(oldUrl&&oldUrl.includes('/storage/v1/object/public/prompt-images/')){
+    const oldPath=oldUrl.split('/prompt-images/')[1];
+    if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+  }
 }
 function stag(t){document.getElementById('qInput').value='#'+t;renderCards()}
 function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);renderAll();toast('נמחק');delFromSB(id)}
@@ -1189,10 +1214,13 @@ function awAddTag(t){
 }
 async function awUploadImg(e){
   const f=e.target.files[0];if(!f)return;
-  if(f.size>5*1024*1024){toast('התמונה גדולה מ-5MB');return}
-  const du=await toDataUrl(f);
-  AW.data.refImage=du;
-  renderAW();
+  if(f.size>20*1024*1024){toast('התמונה גדולה מ-20MB');return}
+  toast('מעלה תמונה...');
+  try{
+    const url=await uploadImgToStorage(f,AW.data.refImage);
+    AW.data.refImage=url;
+    renderAW();
+  }catch(err){console.error(err);toast('שגיאת העלאה: '+err.message)}
 }
 async function awSave(){
   const obj={
