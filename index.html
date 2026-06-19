@@ -130,6 +130,8 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .kind-btns{display:flex;gap:5px}
 .kind-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.3rem;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);font-family:inherit}
 .kind-btn:active{background:var(--pl);color:var(--pd)}
+.kind-row{display:flex;gap:5px;align-items:stretch}
+.kind-row .adapt-btn{flex:1}
 .mode-badge{font-size:10px;font-weight:600;text-align:center;padding:2px 0;border-radius:6px}
 .mode-badge.adapted{background:var(--pl);color:var(--pd)}
 .mode-badge.original{background:var(--bl);color:var(--bd)}
@@ -1186,7 +1188,10 @@ function renderCards(){
         <button class="ref-tab${mode==='original'?' on':''}" onclick="togView('${p.id}','original')">${p.kind==='רפרנס'?'רפרנס':'כללי'}</button>
         <button class="ref-tab${mode==='adapted'?' on':''}" onclick="togView('${p.id}','adapted')">${p.kind==='רפרנס'?'כללי':'מותאם'}</button>
       </div>`:(p.kind?`
-      <button class="adapt-btn" onclick="adaptToRef('${p.id}')"><i class="ti ti-sparkles"></i> ${p.kind==='רפרנס'?'צור גרסה כללית':'צור גרסה מותאמת לרפרנס'}</button>`:`
+      <div class="kind-row">
+        <button class="adapt-btn" onclick="adaptToRef('${p.id}')"><i class="ti ti-sparkles"></i> ${p.kind==='רפרנס'?'צור גרסה כללית':'צור גרסה מותאמת לרפרנס'}</button>
+        <button class="btn bico bs" onclick="setKind('${p.id}','${p.kind==='רפרנס'?'כללי':'רפרנס'}')" title="טעות בסיווג? לחץ להחליף ל-${p.kind==='רפרנס'?'כללי':'רפרנס'}" style="padding:.3rem .4rem;flex-shrink:0"><i class="ti ti-switch-horizontal" style="font-size:13px"></i></button>
+      </div>`:`
       <div class="kind-pick">
         <span class="kind-q">איך כתוב הפרומפט?</span>
         <div class="kind-btns">
