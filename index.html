@@ -117,6 +117,10 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .copy-big{width:100%;padding:.5rem;background:var(--purple);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s;font-family:inherit;margin-top:2px}
 .copy-big:active{opacity:.8}
 .copy-big.copied{background:var(--green,#22c55e)}
+.card-img-wrap{position:relative;margin:-.75rem -.85rem 0;border-radius:var(--rlg) var(--rlg) 0 0;overflow:hidden}
+.card-img{width:100%;height:120px;object-fit:cover;display:block}
+.card-img-actions{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.35);border-radius:8px;padding:2px}
+.card-img-actions .btn{color:#fff}
 .tag:active{border-color:var(--purple);color:var(--purple)}
 .empty{text-align:center;padding:3.5rem 1rem;color:var(--text3)}
 .empty i{font-size:44px;display:block;margin-bottom:.7rem;opacity:.28}
@@ -1001,17 +1005,23 @@ function renderCards(){
   c.innerHTML=list.map(p=>{
     const tags=(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
     return`<div class="card">
+      ${p.refImage?`
+      <div class="card-img-wrap">
+        <img src="${p.refImage}" class="card-img">
+        <div class="actions card-img-actions">
+          <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
+          <button class="btn bico bs bd" onclick="delP('${p.id}')" style="padding:3px 5px"><i class="ti ti-trash" style="font-size:12px"></i></button>
+        </div>
+      </div>`:`
       <div class="card-top">
         <div class="meta">
           ${p.media&&p.media!=='טקסט'?`<span class="badge bmedia">${MEDIA_ICONS[p.media]||''} ${esc(p.media)}</span>`:''}
-          ${p.refImage?`<span class="badge bref"><i class="ti ti-photo" style="font-size:9px"></i></span>`:''}
         </div>
         <div class="actions">
           <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
           <button class="btn bico bs bd" onclick="delP('${p.id}')" style="padding:3px 5px"><i class="ti ti-trash" style="font-size:12px"></i></button>
         </div>
-      </div>
-      ${p.refImage?`<img src="${p.refImage}" style="max-height:60px;border-radius:6px;display:block">`:''}
+      </div>`}
       <div class="card-body" id="cb${p.id}">${esc(p.content)}</div>
       ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag" onclick="stag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`:''}
       <button class="copy-big" id="cp${p.id}" onclick="copyP('${p.id}')"><i class="ti ti-copy"></i> העתק</button>
@@ -1029,12 +1039,12 @@ function stag(t){document.getElementById('qInput').value='#'+t;renderCards()}
 function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);renderAll();toast('נמחק');delFromSB(id)}
 // ── ADD WIZARD (manual) ──────────────────────────────────
 let AW={step:0,data:{},editId:null};
-const AW_STEPS=['תוכן','תגיות','מדיה','סיכום'];
+const AW_STEPS=['תוכן','תגיות','מדיה','תמונה','סיכום'];
 
-function openModal(){AW={step:0,data:{media:'טקסט',content:'',tags:''},editId:null};document.getElementById('addBg').style.display='flex';renderAW()}
+function openModal(){AW={step:0,data:{media:'טקסט',content:'',tags:'',refImage:null},editId:null};document.getElementById('addBg').style.display='flex';renderAW()}
 function editP(id){
   const p=D.prompts.find(x=>x.id===id);if(!p)return;
-  AW={step:0,data:{media:p.media||guessMedia('',p.content),content:p.content||'',tags:p.tags||''},editId:id};
+  AW={step:0,data:{media:p.media||guessMedia('',p.content),content:p.content||'',tags:p.tags||'',refImage:p.refImage||null},editId:id};
   document.getElementById('addBg').style.display='flex';renderAW();
 }
 function closeModal(){document.getElementById('addBg').style.display='none'}
@@ -1093,20 +1103,39 @@ function renderAW(){
     foot.innerHTML=`<button class="btn bs" onclick="AW.step=1;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=3;renderAW()">הבא <i class="ti ti-arrow-left"></i></button>`;
   }
 
-  // STEP 3 – SUMMARY + SAVE
+  // STEP 3 – IMAGE
   else if(AW.step===3){
+    body.innerHTML=`
+      <div class="aw-q">🖼️ תמונה לדוגמה</div>
+      <div class="aw-sub">העלה תמונה שייצרת מהפרומפט הזה – אופציונלי, ניתן לדלג</div>
+      ${AW.data.refImage?`
+        <div style="position:relative;display:inline-block">
+          <img src="${AW.data.refImage}" style="max-width:100%;max-height:280px;border-radius:12px;display:block">
+          <button class="btn bico bs bd" onclick="AW.data.refImage=null;renderAW()" style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:#fff"><i class="ti ti-x"></i></button>
+        </div>`:`
+        <label class="aw-upload-box" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border);border-radius:12px;padding:2.5rem 1rem;cursor:pointer;color:var(--text3)">
+          <i class="ti ti-photo-plus" style="font-size:36px;margin-bottom:.5rem"></i>
+          <span style="font-size:14px">הקש להעלאת תמונה</span>
+          <input type="file" accept="image/*" style="display:none" onchange="awUploadImg(event)">
+        </label>`}`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=2;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=4;renderAW()">${AW.data.refImage?'הבא':'דלג'} <i class="ti ti-arrow-left"></i></button>`;
+  }
+
+  // STEP 4 – SUMMARY + SAVE
+  else if(AW.step===4){
     const MICONS={טקסט:'📝',תמונה:'🖼️',וידאו:'🎬',אודיו:'🎵',קוד:'💻'};
     const curTags=(AW.data.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
     const preview=AW.data.content.slice(0,180)+(AW.data.content.length>180?'...':'');
     body.innerHTML=`
       <div class="aw-q">✅ מוכן לשמירה</div>
       <div class="aw-sub">סקירה לפני שמירה</div>
+      ${AW.data.refImage?`<img src="${AW.data.refImage}" style="max-width:100%;max-height:180px;border-radius:10px;margin-bottom:.6rem;display:block">`:''}
       <div class="aw-preview" id="awPrev" onclick="this.classList.toggle('exp')">${esc(preview)}</div>
       <div style="margin-top:.85rem;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
         <span class="badge" style="background:var(--bg3);color:var(--text2)">${MICONS[AW.data.media]||''} ${esc(AW.data.media)}</span>
         ${curTags.map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
       </div>`;
-    foot.innerHTML=`<button class="btn bs" onclick="AW.step=2;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awSave()"><i class="ti ti-check"></i> ${isEdit?'עדכן':'שמור'}</button>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=3;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awSave()"><i class="ti ti-check"></i> ${isEdit?'עדכן':'שמור'}</button>`;
   }
 }
 function awNext0(){
@@ -1125,6 +1154,13 @@ function awAddTag(t){
   const cur=(inp.value||'').split(',').map(x=>x.trim()).filter(Boolean);
   if(!cur.includes(t)){cur.push(t);inp.value=cur.join(', ');}
 }
+async function awUploadImg(e){
+  const f=e.target.files[0];if(!f)return;
+  if(f.size>5*1024*1024){toast('התמונה גדולה מ-5MB');return}
+  const du=await toDataUrl(f);
+  AW.data.refImage=du;
+  renderAW();
+}
 async function awSave(){
   const obj={
     id:AW.editId||uid(),
@@ -1132,6 +1168,7 @@ async function awSave(){
     media:AW.data.media,
     content:AW.data.content,
     tags:AW.data.tags||'',
+    refImage:AW.data.refImage||null,
     created:AW.editId?(D.prompts.find(p=>p.id===AW.editId)?.created||Date.now()):Date.now()
   };
   if(AW.editId){const i=D.prompts.findIndex(p=>p.id===AW.editId);if(i>-1)D.prompts[i]=obj}
