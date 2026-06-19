@@ -122,6 +122,11 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .ref-tab.on{background:var(--bg);color:var(--purple);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .adapt-btn{width:100%;padding:.4rem;background:var(--pl);color:var(--pd);border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit}
 .adapt-btn:active{opacity:.75}
+.kind-pick{background:var(--bg2);border-radius:8px;padding:.45rem .5rem;display:flex;flex-direction:column;gap:.35rem}
+.kind-q{font-size:10px;color:var(--text3);text-align:center}
+.kind-btns{display:flex;gap:5px}
+.kind-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.3rem;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);font-family:inherit}
+.kind-btn:active{background:var(--pl);color:var(--pd)}
 .card-img-wrap{position:relative;margin:-.75rem -.85rem 0;border-radius:var(--rlg) var(--rlg) 0 0;overflow:hidden}
 .card-img{width:100%;height:120px;object-fit:cover;display:block}
 .card-img-rm{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.4)!important;color:#fff!important;padding:2px 4px!important;width:20px;height:20px;border-radius:50%!important;display:flex;align-items:center;justify-content:center}
@@ -440,6 +445,7 @@ function rowToPrompt(r){
     created:r.created_at?new Date(r.created_at).getTime():Date.now(),
     refImage:extra.refImage||null,
     adapted:extra.adapted||null,
+    kind:extra.kind||null,
     _saved:true
   };
 }
@@ -447,6 +453,7 @@ function promptToRow(p){
   const extra={};
   if(p.refImage)extra.refImage=p.refImage;
   if(p.adapted)extra.adapted=p.adapted;
+  if(p.kind)extra.kind=p.kind;
   return{
     id:p.id&&p.id.length>10?p.id:undefined,
     title:p.title||null,
@@ -851,15 +858,30 @@ IMPORTANT RULES:
   }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
 }
 
+function setKind(id,kind){
+  const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  p.kind=kind;
+  renderCards();
+  svPrompt(p);
+}
 async function adaptToRef(id){
   const key=getKey();
   if(!key){toast('הוסף API Key בהגדרות');return}
   const p=D.prompts.find(x=>x.id===id);if(!p)return;
-  toast('יוצר גרסה מותאמת...');
-  const sys=`You adapt AI image-generation prompts to use a reference image instead of a randomly-described person.
+  const toRef=p.kind!=='רפרנס'; // true: general→reference, false: reference→general
+  toast(toRef?'יוצר גרסה מותאמת...':'יוצר גרסה כללית...');
+  const sys=toRef?
+    `You adapt AI image-generation prompts to use a reference image instead of a randomly-described person.
 The person's physical description (face, hair, body, skin, ethnicity, age etc — anything describing WHO the subject is) may appear ANYWHERE in the text, including mid-sentence, not just at the start.
 Your job:
 1. Find and remove/replace all physical-identity description of the main subject with a reference to "@image1" (e.g. "the woman/man shown in the reference image, keeping her exact face and identity unchanged").
+2. Keep EVERYTHING ELSE exactly as-is: scene, lighting, pose, clothing, camera angle, background, mood, composition.
+3. Output ONLY the adapted prompt text, no explanation, no markdown, no quotes around it.`
+    :
+    `You adapt AI image-generation prompts that reference an uploaded reference image (e.g. "@image1", "the person in the reference image") into a fully self-contained prompt with an invented, realistic physical description instead.
+The reference may appear ANYWHERE in the text, including mid-sentence.
+Your job:
+1. Find and remove/replace all mentions of the reference image with a vivid, realistic, specific physical description of a person (age, ethnicity, hair, face, body type, skin) that fits the scene's context.
 2. Keep EVERYTHING ELSE exactly as-is: scene, lighting, pose, clothing, camera angle, background, mood, composition.
 3. Output ONLY the adapted prompt text, no explanation, no markdown, no quotes around it.`;
   try{
@@ -871,11 +893,11 @@ Your job:
     const data=await r.json();
     if(data.error)throw new Error(data.error.message);
     const adapted=data.content.find(b=>b.type==='text')?.text.trim()||'';
-    if(!adapted)throw new Error('לא הצלחתי ליצור גרסה מותאמת');
+    if(!adapted)throw new Error('לא הצלחתי ליצור גרסה');
     p.adapted=adapted;
     p.viewMode='adapted';
     renderCards();
-    toast('✓ נוצרה גרסה מותאמת');
+    toast(toRef?'✓ נוצרה גרסה מותאמת':'✓ נוצרה גרסה כללית');
     svPrompt(p);
   }catch(err){console.error(err);toast('שגיאה: '+err.message)}
 }
@@ -1089,7 +1111,7 @@ function renderCards(){
   if(!list.length){c.innerHTML=`<div class="empty"><i class="ti ti-database-off"></i><p>${D.prompts.length?'לא נמצאו תוצאות':'לחץ <strong>ייבוא AI</strong> או <strong>+</strong> להתחלה'}</p></div>`;return}
   c.innerHTML=list.map(p=>{
     const tags=(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
-    const mode=p.adapted?(p.viewMode||'adapted'):'original';
+    const mode=p.adapted?(p.viewMode||(p.kind==='רפרנס'?'original':'adapted')):'original';
     const shownContent=mode==='adapted'?p.adapted:p.content;
     return`<div class="card">
       <input type="file" accept="image/*" id="imgInp${p.id}" style="display:none" onchange="quickImg(event,'${p.id}')">
@@ -1117,10 +1139,17 @@ function renderCards(){
       </div>`}
       ${p.media==='תמונה'?(p.adapted?`
       <div class="ref-tabs">
-        <button class="ref-tab${mode==='original'?' on':''}" onclick="togView('${p.id}','original')">מקור</button>
-        <button class="ref-tab${mode==='adapted'?' on':''}" onclick="togView('${p.id}','adapted')">מותאם</button>
-      </div>`:`
-      <button class="adapt-btn" onclick="adaptToRef('${p.id}')"><i class="ti ti-sparkles"></i> צור גרסה מותאמת לרפרנס</button>`):''}
+        <button class="ref-tab${mode==='original'?' on':''}" onclick="togView('${p.id}','original')">${p.kind==='רפרנס'?'רפרנס':'כללי'}</button>
+        <button class="ref-tab${mode==='adapted'?' on':''}" onclick="togView('${p.id}','adapted')">${p.kind==='רפרנס'?'כללי':'מותאם'}</button>
+      </div>`:(p.kind?`
+      <button class="adapt-btn" onclick="adaptToRef('${p.id}')"><i class="ti ti-sparkles"></i> ${p.kind==='רפרנס'?'צור גרסה כללית':'צור גרסה מותאמת לרפרנס'}</button>`:`
+      <div class="kind-pick">
+        <span class="kind-q">איך כתוב הפרומפט?</span>
+        <div class="kind-btns">
+          <button class="kind-btn" onclick="setKind('${p.id}','כללי')">זה כללי</button>
+          <button class="kind-btn" onclick="setKind('${p.id}','רפרנס')">זה רפרנס</button>
+        </div>
+      </div>`)):''}
       <div class="card-body" id="cb${p.id}">${esc(shownContent)}</div>
       ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag" onclick="stag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`:''}
       <button class="copy-big" id="cp${p.id}" onclick="copyP('${p.id}','${mode}')"><i class="ti ti-copy"></i> העתק</button>
