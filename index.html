@@ -117,6 +117,11 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .copy-big{width:100%;padding:.5rem;background:var(--purple);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s;font-family:inherit;margin-top:2px}
 .copy-big:active{opacity:.8}
 .copy-big.copied{background:var(--green,#22c55e)}
+.ref-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:8px;padding:2px}
+.ref-tab{flex:1;background:none;border:none;padding:4px 0;font-size:11px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--text3);font-family:inherit}
+.ref-tab.on{background:var(--bg);color:var(--purple);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.adapt-btn{width:100%;padding:.4rem;background:var(--pl);color:var(--pd);border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit}
+.adapt-btn:active{opacity:.75}
 .card-img-wrap{position:relative;margin:-.75rem -.85rem 0;border-radius:var(--rlg) var(--rlg) 0 0;overflow:hidden}
 .card-img{width:100%;height:120px;object-fit:cover;display:block}
 .card-img-rm{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.4)!important;color:#fff!important;padding:2px 4px!important;width:20px;height:20px;border-radius:50%!important;display:flex;align-items:center;justify-content:center}
@@ -434,10 +439,14 @@ function rowToPrompt(r){
     tags:Array.isArray(r.tags)?r.tags.join(', '):(r.tags||''),
     created:r.created_at?new Date(r.created_at).getTime():Date.now(),
     refImage:extra.refImage||null,
+    adapted:extra.adapted||null,
     _saved:true
   };
 }
 function promptToRow(p){
+  const extra={};
+  if(p.refImage)extra.refImage=p.refImage;
+  if(p.adapted)extra.adapted=p.adapted;
   return{
     id:p.id&&p.id.length>10?p.id:undefined,
     title:p.title||null,
@@ -448,7 +457,7 @@ function promptToRow(p){
     type:p.type||'כללי',
     media_type:p.media||'טקסט',
     tags:p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):null,
-    extra:p.refImage?{refImage:p.refImage}:null
+    extra:Object.keys(extra).length?extra:null
   };
 }
 
@@ -842,7 +851,39 @@ IMPORTANT RULES:
   }catch(err){toast('שגיאה: '+err.message);W.step='upload';rwiz()}
 }
 
-function togSel(i){W.sel[i]=!W.sel[i];rwiz()}
+async function adaptToRef(id){
+  const key=getKey();
+  if(!key){toast('הוסף API Key בהגדרות');return}
+  const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  toast('יוצר גרסה מותאמת...');
+  const sys=`You adapt AI image-generation prompts to use a reference image instead of a randomly-described person.
+The person's physical description (face, hair, body, skin, ethnicity, age etc — anything describing WHO the subject is) may appear ANYWHERE in the text, including mid-sentence, not just at the start.
+Your job:
+1. Find and remove/replace all physical-identity description of the main subject with a reference to "@image1" (e.g. "the woman/man shown in the reference image, keeping her exact face and identity unchanged").
+2. Keep EVERYTHING ELSE exactly as-is: scene, lighting, pose, clothing, camera angle, background, mood, composition.
+3. Output ONLY the adapted prompt text, no explanation, no markdown, no quotes around it.`;
+  try{
+    const r=await fetch('/api/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,system:sys,messages:[{role:'user',content:[{type:'text',text:p.content}]}]})
+    });
+    const data=await r.json();
+    if(data.error)throw new Error(data.error.message);
+    const adapted=data.content.find(b=>b.type==='text')?.text.trim()||'';
+    if(!adapted)throw new Error('לא הצלחתי ליצור גרסה מותאמת');
+    p.adapted=adapted;
+    p.viewMode='adapted';
+    renderCards();
+    toast('✓ נוצרה גרסה מותאמת');
+    svPrompt(p);
+  }catch(err){console.error(err);toast('שגיאה: '+err.message)}
+}
+function togView(id,mode){
+  const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  p.viewMode=mode;
+  renderCards();
+}
 function selAll(v){W.sel=W.prompts.map(()=>v);rwiz()}
 function startClassify(){
   if(!W.sel.some(Boolean)){toast('בחר לפחות פרומפט אחד');return}
@@ -1048,6 +1089,8 @@ function renderCards(){
   if(!list.length){c.innerHTML=`<div class="empty"><i class="ti ti-database-off"></i><p>${D.prompts.length?'לא נמצאו תוצאות':'לחץ <strong>ייבוא AI</strong> או <strong>+</strong> להתחלה'}</p></div>`;return}
   c.innerHTML=list.map(p=>{
     const tags=(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+    const mode=p.adapted?(p.viewMode||'adapted'):'original';
+    const shownContent=mode==='adapted'?p.adapted:p.content;
     return`<div class="card">
       <input type="file" accept="image/*" id="imgInp${p.id}" style="display:none" onchange="quickImg(event,'${p.id}')">
       ${p.refImage?`
@@ -1072,9 +1115,15 @@ function renderCards(){
           <button class="btn bico bs bd" onclick="delP('${p.id}')" style="padding:3px 5px"><i class="ti ti-trash" style="font-size:12px"></i></button>
         </div>
       </div>`}
-      <div class="card-body" id="cb${p.id}">${esc(p.content)}</div>
+      ${p.media==='תמונה'?(p.adapted?`
+      <div class="ref-tabs">
+        <button class="ref-tab${mode==='original'?' on':''}" onclick="togView('${p.id}','original')">מקור</button>
+        <button class="ref-tab${mode==='adapted'?' on':''}" onclick="togView('${p.id}','adapted')">מותאם</button>
+      </div>`:`
+      <button class="adapt-btn" onclick="adaptToRef('${p.id}')"><i class="ti ti-sparkles"></i> צור גרסה מותאמת לרפרנס</button>`):''}
+      <div class="card-body" id="cb${p.id}">${esc(shownContent)}</div>
       ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag" onclick="stag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`:''}
-      <button class="copy-big" id="cp${p.id}" onclick="copyP('${p.id}')"><i class="ti ti-copy"></i> העתק</button>
+      <button class="copy-big" id="cp${p.id}" onclick="copyP('${p.id}','${mode}')"><i class="ti ti-copy"></i> העתק</button>
       <div class="card-foot">
         <span>${new Date(p.created).toLocaleDateString('he-IL')}</span>
         <button class="exp-btn" onclick="exP('${p.id}')">עוד ▾</button>
@@ -1084,7 +1133,7 @@ function renderCards(){
 }
 
 function exP(id){const b=document.getElementById('cb'+id);const btn=b.closest('.card').querySelector('.exp-btn');btn.textContent=b.classList.toggle('exp')?'הצג פחות ▴':'הצג הכל ▾'}
-function copyP(id){const p=D.prompts.find(x=>x.id===id);if(!p)return;navigator.clipboard.writeText(p.content).then(()=>{const b=document.getElementById('cp'+id);if(!b)return;const orig=b.innerHTML;b.classList.add('copied');b.innerHTML='<i class="ti ti-check"></i> הועתק!';setTimeout(()=>{b.classList.remove('copied');b.innerHTML=orig},1400);toast('✓ הועתק!')})}
+function copyP(id,mode){const p=D.prompts.find(x=>x.id===id);if(!p)return;const txt=(mode==='adapted'&&p.adapted)?p.adapted:p.content;navigator.clipboard.writeText(txt).then(()=>{const b=document.getElementById('cp'+id);if(!b)return;const orig=b.innerHTML;b.classList.add('copied');b.innerHTML='<i class="ti ti-check"></i> הועתק!';setTimeout(()=>{b.classList.remove('copied');b.innerHTML=orig},1400);toast('✓ הועתק!')})}
 async function quickImg(e,id){
   const f=e.target.files[0];if(!f)return;
   if(f.size>20*1024*1024){toast('התמונה גדולה מ-20MB');return}
