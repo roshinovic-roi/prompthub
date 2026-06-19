@@ -119,9 +119,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .copy-big.copied{background:var(--green,#22c55e)}
 .card-img-wrap{position:relative;margin:-.75rem -.85rem 0;border-radius:var(--rlg) var(--rlg) 0 0;overflow:hidden}
 .card-img{width:100%;height:120px;object-fit:cover;display:block}
-.card-img-actions{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.35);border-radius:8px;padding:2px}
-.card-img-actions .btn{color:#fff}
-.card-img-rm{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.45)!important;color:#fff!important;padding:3px 5px!important}
+.card-img-rm{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.4)!important;color:#fff!important;padding:2px 4px!important;width:20px;height:20px;border-radius:50%!important;display:flex;align-items:center;justify-content:center}
 .tag:active{border-color:var(--purple);color:var(--purple)}
 .empty{text-align:center;padding:3.5rem 1rem;color:var(--text3)}
 .empty i{font-size:44px;display:block;margin-bottom:.7rem;opacity:.28}
@@ -1055,12 +1053,14 @@ function renderCards(){
       ${p.refImage?`
       <div class="card-img-wrap">
         <img src="${p.refImage}" class="card-img" onclick="openLightbox('${p.refImage}')" style="cursor:zoom-in">
-        <div class="actions card-img-actions">
+        <button class="btn bico bs card-img-rm" onclick="rmImg('${p.id}')" title="הסר תמונה"><i class="ti ti-x" style="font-size:10px"></i></button>
+      </div>
+      <div class="card-top" style="justify-content:flex-end">
+        <div class="actions">
           <button class="btn bico bs" onclick="document.getElementById('imgInp${p.id}').click()" style="padding:3px 5px" title="החלף תמונה"><i class="ti ti-photo" style="font-size:12px"></i></button>
           <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
           <button class="btn bico bs bd" onclick="delP('${p.id}')" style="padding:3px 5px"><i class="ti ti-trash" style="font-size:12px"></i></button>
         </div>
-        <button class="btn bico bs card-img-rm" onclick="rmImg('${p.id}')" title="הסר תמונה"><i class="ti ti-x" style="font-size:11px"></i></button>
       </div>`:`
       <div class="card-top">
         <div class="meta">
