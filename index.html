@@ -342,9 +342,20 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
       <option value="אודיו">🎵 אודיו</option>
       <option value="קוד">💻 קוד</option>
     </select>
+    <select id="fHasImg" onchange="renderCards()">
+      <option value="">כל הכרטיסים</option>
+      <option value="yes">🖼️ עם תמונה</option>
+      <option value="no">⬜ בלי תמונה</option>
+    </select>
   </div>
   <div class="cards" id="cardsWrap"></div>
 </main>
+
+<!-- IMAGE LIGHTBOX -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center" onclick="closeLightbox(event)">
+  <img id="lightboxImg" src="" style="max-width:94vw;max-height:88vh;object-fit:contain;border-radius:8px">
+  <button onclick="closeLightbox(event)" style="position:absolute;top:18px;left:18px;background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="ti ti-x"></i></button>
+</div>
 
 <!-- ADD WIZARD (manual) -->
 <div id="addBg" class="modal-bg" style="display:none" onclick="addBgClick(event)">
@@ -888,6 +899,9 @@ async function finalSave(){
 function loadMammoth(){return new Promise((res,rej)=>{if(typeof mammoth!=='undefined'){res();return}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
 function toDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file)})}
 
+function openLightbox(url){document.getElementById('lightboxImg').src=url;document.getElementById('lightbox').style.display='flex'}
+function closeLightbox(e){if(e)e.stopPropagation();document.getElementById('lightbox').style.display='none'}
+
 async function uploadImgToStorage(file,oldUrl){
   const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
   const path=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
@@ -1015,11 +1029,14 @@ function guessMedia(tool,content){
 function renderCards(){
   const q=document.getElementById('qInput').value.trim();
   const fMd=document.getElementById('fMedia').value;
+  const fImg=document.getElementById('fHasImg').value;
   // Check if searching by hashtag
   const tagSearch=q.startsWith('#')?q.slice(1).toLowerCase():null;
   const qLow=q.toLowerCase();
   let list=D.prompts.filter(p=>{
     if(fMd&&(p.media||'טקסט')!==fMd)return false;
+    if(fImg==='yes'&&!p.refImage)return false;
+    if(fImg==='no'&&p.refImage)return false;
     if(tagSearch){
       const tags=(p.tags||'').split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
       if(!tags.some(t=>t.includes(tagSearch)))return false;
@@ -1037,7 +1054,7 @@ function renderCards(){
       <input type="file" accept="image/*" id="imgInp${p.id}" style="display:none" onchange="quickImg(event,'${p.id}')">
       ${p.refImage?`
       <div class="card-img-wrap">
-        <img src="${p.refImage}" class="card-img">
+        <img src="${p.refImage}" class="card-img" onclick="openLightbox('${p.refImage}')" style="cursor:zoom-in">
         <div class="actions card-img-actions">
           <button class="btn bico bs" onclick="document.getElementById('imgInp${p.id}').click()" style="padding:3px 5px" title="החלף תמונה"><i class="ti ti-photo" style="font-size:12px"></i></button>
           <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
