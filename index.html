@@ -121,6 +121,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .card-img{width:100%;height:120px;object-fit:cover;display:block}
 .card-img-actions{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.35);border-radius:8px;padding:2px}
 .card-img-actions .btn{color:#fff}
+.card-img-rm{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.45)!important;color:#fff!important;padding:3px 5px!important}
 .tag:active{border-color:var(--purple);color:var(--purple)}
 .empty{text-align:center;padding:3.5rem 1rem;color:var(--text3)}
 .empty i{font-size:44px;display:block;margin-bottom:.7rem;opacity:.28}
@@ -423,7 +424,8 @@ function rowToPrompt(r){
     media:r.media_type||'טקסט',
     tags:Array.isArray(r.tags)?r.tags.join(', '):(r.tags||''),
     created:r.created_at?new Date(r.created_at).getTime():Date.now(),
-    refImage:extra.refImage||null
+    refImage:extra.refImage||null,
+    _saved:true
   };
 }
 function promptToRow(p){
@@ -465,9 +467,18 @@ function svMeta(){localStorage.setItem(SK+'_meta',JSON.stringify({topics:D.topic
 // ─── SAVE PROMPT TO SUPABASE ────────────────────────────
 async function svPrompt(p){
   const row=promptToRow(p);
-  // always let Supabase generate the id
   delete row.id;
   try{
+    if(p._saved){
+      const res=await fetch(SB_URL+'/rest/v1/prompts?id=eq.'+p.id,{
+        method:'PATCH',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(row)
+      });
+      if(!res.ok){const e=await res.text();console.error('svPrompt update error:',res.status,e);toast('שגיאת עדכון '+res.status);return}
+      console.log('Updated in Supabase:',p.id);
+      return;
+    }
     const res=await fetch(SB_URL+'/rest/v1/prompts',{
       method:'POST',
       headers:{
@@ -486,6 +497,7 @@ async function svPrompt(p){
     }
     const data=await res.json();
     if(data&&data[0])p.id=data[0].id;
+    p._saved=true;
     console.log('Saved to Supabase:',p.id);
   }catch(e){console.error('svPrompt catch:',e);toast('שגיאת שמירה: '+e.message)}
 }
@@ -1005,19 +1017,23 @@ function renderCards(){
   c.innerHTML=list.map(p=>{
     const tags=(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
     return`<div class="card">
+      <input type="file" accept="image/*" id="imgInp${p.id}" style="display:none" onchange="quickImg(event,'${p.id}')">
       ${p.refImage?`
       <div class="card-img-wrap">
         <img src="${p.refImage}" class="card-img">
         <div class="actions card-img-actions">
+          <button class="btn bico bs" onclick="document.getElementById('imgInp${p.id}').click()" style="padding:3px 5px" title="החלף תמונה"><i class="ti ti-photo" style="font-size:12px"></i></button>
           <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
           <button class="btn bico bs bd" onclick="delP('${p.id}')" style="padding:3px 5px"><i class="ti ti-trash" style="font-size:12px"></i></button>
         </div>
+        <button class="btn bico bs card-img-rm" onclick="rmImg('${p.id}')" title="הסר תמונה"><i class="ti ti-x" style="font-size:11px"></i></button>
       </div>`:`
       <div class="card-top">
         <div class="meta">
           ${p.media&&p.media!=='טקסט'?`<span class="badge bmedia">${MEDIA_ICONS[p.media]||''} ${esc(p.media)}</span>`:''}
         </div>
         <div class="actions">
+          <button class="btn bico bs" onclick="document.getElementById('imgInp${p.id}').click()" style="padding:3px 5px" title="הוסף תמונה"><i class="ti ti-photo-plus" style="font-size:12px"></i></button>
           <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
           <button class="btn bico bs bd" onclick="delP('${p.id}')" style="padding:3px 5px"><i class="ti ti-trash" style="font-size:12px"></i></button>
         </div>
@@ -1035,6 +1051,23 @@ function renderCards(){
 
 function exP(id){const b=document.getElementById('cb'+id);const btn=b.closest('.card').querySelector('.exp-btn');btn.textContent=b.classList.toggle('exp')?'הצג פחות ▴':'הצג הכל ▾'}
 function copyP(id){const p=D.prompts.find(x=>x.id===id);if(!p)return;navigator.clipboard.writeText(p.content).then(()=>{const b=document.getElementById('cp'+id);if(!b)return;const orig=b.innerHTML;b.classList.add('copied');b.innerHTML='<i class="ti ti-check"></i> הועתק!';setTimeout(()=>{b.classList.remove('copied');b.innerHTML=orig},1400);toast('✓ הועתק!')})}
+async function quickImg(e,id){
+  const f=e.target.files[0];if(!f)return;
+  if(f.size>5*1024*1024){toast('התמונה גדולה מ-5MB');return}
+  const du=await toDataUrl(f);
+  const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  p.refImage=du;
+  renderCards();
+  toast('✓ תמונה עודכנה');
+  svPrompt(p);
+}
+function rmImg(id){
+  const p=D.prompts.find(x=>x.id===id);if(!p)return;
+  p.refImage=null;
+  renderCards();
+  toast('הוסרה תמונה');
+  svPrompt(p);
+}
 function stag(t){document.getElementById('qInput').value='#'+t;renderCards()}
 function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);renderAll();toast('נמחק');delFromSB(id)}
 // ── ADD WIZARD (manual) ──────────────────────────────────
@@ -1169,7 +1202,8 @@ async function awSave(){
     content:AW.data.content,
     tags:AW.data.tags||'',
     refImage:AW.data.refImage||null,
-    created:AW.editId?(D.prompts.find(p=>p.id===AW.editId)?.created||Date.now()):Date.now()
+    created:AW.editId?(D.prompts.find(p=>p.id===AW.editId)?.created||Date.now()):Date.now(),
+    _saved:!!AW.editId
   };
   if(AW.editId){const i=D.prompts.findIndex(p=>p.id===AW.editId);if(i>-1)D.prompts[i]=obj}
   else D.prompts.unshift(obj);
