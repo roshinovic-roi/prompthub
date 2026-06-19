@@ -127,6 +127,9 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .kind-btns{display:flex;gap:5px}
 .kind-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.3rem;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);font-family:inherit}
 .kind-btn:active{background:var(--pl);color:var(--pd)}
+.mode-badge{font-size:10px;font-weight:600;text-align:center;padding:2px 0;border-radius:6px}
+.mode-badge.adapted{background:var(--pl);color:var(--pd)}
+.mode-badge.original{background:var(--bl);color:var(--bd)}
 .card-img-wrap{position:relative;margin:-.75rem -.85rem 0;border-radius:var(--rlg) var(--rlg) 0 0;overflow:hidden}
 .card-img{width:100%;height:120px;object-fit:cover;display:block}
 .card-img-rm{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.4)!important;color:#fff!important;padding:2px 4px!important;width:20px;height:20px;border-radius:50%!important;display:flex;align-items:center;justify-content:center}
@@ -1150,6 +1153,7 @@ function renderCards(){
           <button class="kind-btn" onclick="setKind('${p.id}','רפרנס')">זה רפרנס</button>
         </div>
       </div>`)):''}
+      ${p.adapted?`<div class="mode-badge ${mode}">${mode==='adapted'?'🟣 גרסה מותאמת לרפרנס':'🔵 גרסה כללית'}</div>`:''}
       <div class="card-body" id="cb${p.id}">${esc(shownContent)}</div>
       ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag" onclick="stag('${esc(t)}')">#${esc(t)}</span>`).join('')}</div>`:''}
       <button class="copy-big" id="cp${p.id}" onclick="copyP('${p.id}','${mode}')"><i class="ti ti-copy"></i> העתק</button>
