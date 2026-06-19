@@ -495,7 +495,15 @@ async function ld(){
 function svMeta(){localStorage.setItem(SK+'_meta',JSON.stringify({topics:D.topics,subs:D.subs,tools:D.tools}))}
 
 // ─── SAVE PROMPT TO SUPABASE ────────────────────────────
+const _saveQueues={};
 async function svPrompt(p){
+  const pid=p.id;
+  const prevQueue=_saveQueues[pid]||Promise.resolve();
+  const thisSave=prevQueue.then(()=>_doSavePrompt(p));
+  _saveQueues[pid]=thisSave.catch(()=>{});
+  return thisSave;
+}
+async function _doSavePrompt(p){
   const row=promptToRow(p);
   delete row.id;
   try{
