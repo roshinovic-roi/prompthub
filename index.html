@@ -290,12 +290,28 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 </head>
 <body>
 
-<nav>
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:900;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px">
+  <div class="logo-icon" style="width:48px;height:48px;font-size:20px;display:flex;align-items:center;justify-content:center"><i class="ti ti-sparkles"></i></div>
+  <div style="font-size:20px;font-weight:700;color:var(--text)">PromptHub</div>
+  <div style="font-size:13px;color:var(--text3);text-align:center;max-width:280px">התחבר עם המייל שלך — תקבל קישור חד-פעמי, בלי סיסמה</div>
+  <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px">
+    <input type="email" id="loginEmail" placeholder="you@example.com" style="padding:.75rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:15px;text-align:left;direction:ltr">
+    <button class="btn bp" id="loginBtn" onclick="sendMagicLink()" style="padding:.75rem 1rem;justify-content:center">שלח קישור התחברות</button>
+    <div id="loginStatus" style="font-size:12px;color:var(--purple);text-align:center;min-height:16px"></div>
+  </div>
+</div>
+
+<nav id="navBar">
   <div class="logo">
     <div class="logo-icon"><i class="ti ti-sparkles" style="font-size:13px"></i></div>
     PromptHub
   </div>
   <div class="nav-r">
+    <span id="userEmailLbl" style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button class="btn bico bs" onclick="doLogout()" title="התנתק">
+      <i class="ti ti-logout"></i>
+    </button>
     <button class="btn bp bs" onclick="openWizard()" style="gap:5px">
       <i class="ti ti-wand"></i> ייבוא AI
     </button>
@@ -308,7 +324,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
   </div>
 </nav>
 
-<main>
+<main id="mainRoot">
   <!-- SETTINGS -->
   <div id="settingsWrap" style="display:none" class="settings-wrap">
     <div class="settings-hd">
@@ -407,13 +423,20 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
   <div style="font-size:13px;color:var(--text3)">מתחבר ל-Supabase</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ─── SUPABASE CONFIG ──────────────────────────────────────
-const SB_URL='https://ezppnixdvsibmmokfzrb.supabase.co';
-const SB_KEY='sb_publishable_Yf5IO7cbJD2-f6HdIOoCmA_AUP36Wcd';
+// ─── SUPABASE CONFIG (PromptHub Public — multi-tenant) ────
+const SB_URL='https://qfjngabqhxbpnvfssijq.supabase.co';
+const SB_KEY='sb_publishable__VyQ0LyxUDbLQosfGAEudg_r-AKm8cq';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+let SESSION=null;
+
+function authH(){
+  return{'apikey':SB_KEY,'Authorization':'Bearer '+(SESSION&&SESSION.access_token?SESSION.access_token:SB_KEY)};
+}
 
 async function sbFetch(path,opts={}){
-  const hdrs={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+  const hdrs={'Content-Type':'application/json',...authH()};
   if(opts.method!=='DELETE')hdrs['Prefer']='return=representation';
   Object.assign(hdrs,opts.headers||{});
   const r=await fetch(SB_URL+path,{...opts,headers:hdrs});
@@ -421,6 +444,47 @@ async function sbFetch(path,opts={}){
   if(r.status===204)return[];
   const t=await r.text();
   return t?JSON.parse(t):[];
+}
+
+// ─── AUTH (magic link) ────────────────────────────────────
+async function initAuth(){
+  const{data:{session}}=await sb.auth.getSession();
+  SESSION=session;
+  if(session){await showApp()}else{showLogin()}
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    SESSION=session;
+    if(!session){showLogin();return}
+    if(event==='SIGNED_IN'){await showApp()}
+    // INITIAL_SESSION / TOKEN_REFRESHED / USER_UPDATED: SESSION updated above, no reload needed
+  });
+}
+function showLogin(){
+  document.getElementById('loginOverlay').style.display='flex';
+  document.getElementById('navBar').style.display='none';
+  document.getElementById('mainRoot').style.display='none';
+}
+async function showApp(){
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('navBar').style.display='';
+  document.getElementById('mainRoot').style.display='';
+  document.getElementById('userEmailLbl').textContent=SESSION.user.email;
+  await ld();renderAll();loadKeyFromSB();
+}
+async function sendMagicLink(){
+  const email=document.getElementById('loginEmail').value.trim();
+  if(!email){toast('הזן כתובת מייל');return}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.textContent='שולח...';
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+  btn.disabled=false;btn.textContent='שלח קישור התחברות';
+  if(error){toast('שגיאה: '+error.message);return}
+  document.getElementById('loginStatus').textContent='✓ קישור התחברות נשלח ל-'+email+' — בדוק את תיבת המייל';
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  SESSION=null;
+  D.prompts=[];
+  showLogin();
 }
 
 const SK='prompthub_v3';
@@ -509,11 +573,12 @@ async function svPrompt(p){
 async function _doSavePrompt(p){
   const row=promptToRow(p);
   delete row.id;
+  if(SESSION&&SESSION.user)row.user_id=SESSION.user.id;
   try{
     if(p._saved){
       const res=await fetch(SB_URL+'/rest/v1/prompts?id=eq.'+p.id,{
         method:'PATCH',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+        headers:{...authH(),'Content-Type':'application/json','Prefer':'return=representation'},
         body:JSON.stringify(row)
       });
       if(!res.ok){const e=await res.text();console.error('svPrompt update error:',res.status,e);toast('שגיאת עדכון '+res.status);return}
@@ -523,8 +588,7 @@ async function _doSavePrompt(p){
     const res=await fetch(SB_URL+'/rest/v1/prompts',{
       method:'POST',
       headers:{
-        'apikey':SB_KEY,
-        'Authorization':'Bearer '+SB_KEY,
+        ...authH(),
         'Content-Type':'application/json',
         'Prefer':'return=representation'
       },
@@ -561,12 +625,11 @@ async function saveKey(){
     const res=await fetch(SB_URL+'/rest/v1/settings',{
       method:'POST',
       headers:{
-        'apikey':SB_KEY,
-        'Authorization':'Bearer '+SB_KEY,
+        ...authH(),
         'Content-Type':'application/json',
         'Prefer':'resolution=merge-duplicates'
       },
-      body:JSON.stringify({key:'api_key',value:k})
+      body:JSON.stringify({key:'api_key',value:k,user_id:SESSION&&SESSION.user?SESSION.user.id:null})
     });
     if(!res.ok){const e=await res.text();console.error('saveKey error:',res.status,e)}
     else{console.log('API key saved to Supabase')}
@@ -984,14 +1047,14 @@ async function uploadImgToStorage(file,oldUrl){
   const path=`${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
   const res=await fetch(`${SB_URL}/storage/v1/object/prompt-images/${path}`,{
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type||'image/jpeg'},
+    headers:{...authH(),'Content-Type':file.type||'image/jpeg'},
     body:file
   });
   if(!res.ok){const e=await res.text();throw new Error('Storage upload failed: '+res.status+' '+e)}
   // Delete old image from storage if replacing (best-effort, don't block)
   if(oldUrl&&oldUrl.includes('/storage/v1/object/public/prompt-images/')){
     const oldPath=oldUrl.split('/prompt-images/')[1];
-    if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+    if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:authH()}).catch(()=>{});
   }
   return `${SB_URL}/storage/v1/object/public/prompt-images/${path}`;
 }
@@ -1237,7 +1300,7 @@ function rmImg(id,mode){
   svPrompt(p);
   if(oldUrl&&oldUrl.includes('/storage/v1/object/public/prompt-images/')){
     const oldPath=oldUrl.split('/prompt-images/')[1];
-    if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+    if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:authH()}).catch(()=>{});
   }
 }
 function stag(t){document.getElementById('qInput').value='#'+t;renderCards()}
@@ -1402,7 +1465,7 @@ function renderAll(){renderMainTabs();updateStats();updateFilters();renderCards(
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
 
-ld().then(()=>{renderAll();loadKeyFromSB();});
+initAuth();
 </script>
 </body>
 </html>
