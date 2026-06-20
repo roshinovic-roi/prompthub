@@ -23,10 +23,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid email' });
   }
 
-  const PIXEL_ID = process.env.META_PIXEL_ID;
-  const CAPI_TOKEN = process.env.META_CAPI_TOKEN;
-  const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-  const TG_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+  const PIXEL_ID = (process.env.META_PIXEL_ID || '').trim();
+  const CAPI_TOKEN = (process.env.META_CAPI_TOKEN || '').trim();
+  const TG_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  const TG_CHAT_ID = (process.env.TELEGRAM_CHAT_ID || '').trim();
 
   const results = { capi: null, telegram: null };
 
@@ -36,6 +36,8 @@ export default async function handler(req, res) {
     hasCapiToken: !!CAPI_TOKEN,
     hasTgToken: !!TG_TOKEN,
     hasTgChatId: !!TG_CHAT_ID,
+    capiTokenLen: CAPI_TOKEN.length,
+    capiTokenRawLen: (process.env.META_CAPI_TOKEN || '').length,
   });
 
   // 1. Send Lead event to Meta Conversions API
