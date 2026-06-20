@@ -163,6 +163,18 @@ src="https://www.facebook.com/tr?id=1549116773231542&ev=PageView&noscript=1"
 <footer>PromptHub © 2026</footer>
 
 <script>
+  // log a page view for the funnel dashboard (fire-and-forget, never blocks the page)
+  (function(){
+    var SUPA_URL = 'https://qfjngabqhxbpnvfssijq.supabase.co';
+    var SUPA_KEY = 'sb_publishable__VyQ0LyxUDbLQosfGAEudg_r-AKm8cq';
+    fetch(SUPA_URL + '/rest/v1/page_views', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY },
+      body: JSON.stringify({ source_url: window.location.href, referrer: document.referrer || '' })
+    }).catch(function(){});
+  })();
+</script>
+<script>
   (function(){
     var text = "תאר בבקשה תפאורת חוף אינסטגרמית, אור זהוב...";
     var el = document.getElementById('termLine');
