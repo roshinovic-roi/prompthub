@@ -27,7 +27,7 @@
   --rl:#3a1010;--rd:#F09595;--gl:#152808;--gd:#C0DD97;--bl:#0a1e38;--bd:#85B7EB;
 }}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px}
+html{font-size:16px;overflow-x:hidden}
 body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg2);color:var(--text);line-height:1.5;min-height:100vh;direction:rtl;overflow-x:hidden}
 
 /* ── NAV ── */
@@ -35,6 +35,10 @@ nav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1rem;
 .logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:7px;flex-shrink:0;letter-spacing:-.3px}
 .logo-icon{width:30px;height:30px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0}
 .nav-r{display:flex;gap:6px;align-items:center}
+@media(max-width:480px){
+  #userEmailLbl{display:none}
+  .lbl-sm-hide{display:none}
+}
 
 /* ── BUTTONS ── */
 .btn{height:40px;padding:0 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);font-size:14px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;transition:background .12s,transform .08s;min-width:40px}
@@ -313,7 +317,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
       <i class="ti ti-logout"></i>
     </button>
     <button class="btn bp bs" onclick="openWizard()" style="gap:5px">
-      <i class="ti ti-wand"></i> ייבוא AI
+      <i class="ti ti-wand"></i><span class="lbl-sm-hide"> ייבוא AI</span>
     </button>
     <button class="btn bico bs" onclick="toggleSettings()" title="הגדרות">
       <i class="ti ti-settings"></i>
