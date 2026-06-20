@@ -30,6 +30,14 @@ export default async function handler(req, res) {
 
   const results = { capi: null, telegram: null };
 
+  console.log('[lead] received email:', email);
+  console.log('[lead] env check:', {
+    hasPixelId: !!PIXEL_ID,
+    hasCapiToken: !!CAPI_TOKEN,
+    hasTgToken: !!TG_TOKEN,
+    hasTgChatId: !!TG_CHAT_ID,
+  });
+
   // 1. Send Lead event to Meta Conversions API
   if (PIXEL_ID && CAPI_TOKEN) {
     try {
@@ -60,8 +68,10 @@ export default async function handler(req, res) {
         }
       );
       results.capi = await capiRes.json();
+      console.log('[lead] capi result:', JSON.stringify(results.capi));
     } catch (err) {
       results.capi = { error: err.message };
+      console.log('[lead] capi error:', err.message);
     }
   }
 
@@ -75,8 +85,10 @@ export default async function handler(req, res) {
         body: JSON.stringify({ chat_id: TG_CHAT_ID, text }),
       });
       results.telegram = await tgRes.json();
+      console.log('[lead] telegram result:', JSON.stringify(results.telegram));
     } catch (err) {
       results.telegram = { error: err.message };
+      console.log('[lead] telegram error:', err.message);
     }
   }
 
