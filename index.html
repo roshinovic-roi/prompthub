@@ -369,10 +369,15 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
       <div class="key-st" id="keySt"></div>
       <p style="font-size:12px;color:var(--text3);margin-top:.5rem;line-height:1.5">נשמר רק במכשירך. נדרש לייבוא חכם של קבצים ותמונות.<br>השג מפתח ב: <a href="https://console.anthropic.com" target="_blank" style="color:var(--purple)">console.anthropic.com</a></p>
     </div>
-    <div style="display:flex;gap:8px;padding-top:.75rem;border-top:0.5px solid var(--border)">
-      <button class="btn bs" onclick="exportData()"><i class="ti ti-download"></i> ייצוא</button>
-      <label class="btn bs" style="cursor:pointer"><i class="ti ti-upload"></i> ייבוא<input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
-      <button class="btn bs" onclick="toggleHelp()"><i class="ti ti-book"></i> הוראות</button>
+    <div style="padding-top:.75rem;border-top:0.5px solid var(--border)">
+      <h3 style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:.5rem"><i class="ti ti-device-floppy"></i> הנתונים שלך</h3>
+      <p style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:.6rem">הפרומפטים שלך שייכים לך. ייצוא שומר קובץ גיבוי מלא במכשיר; ייבוא <strong>מוסיף</strong> לחשבון הנוכחי ולא מוחק כלום קיים.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn bs" onclick="exportData()"><i class="ti ti-download"></i> ייצוא</button>
+        <label class="btn bs" style="cursor:pointer"><i class="ti ti-upload"></i> ייבוא<input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
+        <button class="btn bs" onclick="toggleHelp()"><i class="ti ti-book"></i> הוראות</button>
+      </div>
+      <div id="backupSt" style="font-size:11.5px;color:var(--text3);margin-top:.5rem"></div>
     </div>
   </div>
 
@@ -724,7 +729,17 @@ function checkBanner(){document.getElementById('noKeyBanner').style.display=getK
 function toggleSettings(){
   const p=document.getElementById('settingsWrap'),show=p.style.display==='none';
   p.style.display=show?'block':'none';
-  if(show){document.getElementById('apiKey').value=getKey();renderKeySt()}
+  if(show){document.getElementById('apiKey').value=getKey();renderKeySt();updateBackupSt()}
+}
+function updateBackupSt(){
+  const el=document.getElementById('backupSt');if(!el)return;
+  const ts=localStorage.getItem('ph_last_backup');
+  if(!ts){el.innerHTML='⚠️ עדיין לא ביצעת גיבוי. מומלץ לייצא לפחות פעם בשבוע.';el.style.color='var(--ad)';return}
+  const d=new Date(parseInt(ts));
+  const days=Math.floor((Date.now()-d.getTime())/86400000);
+  const dateStr=d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(days>=7){el.innerHTML=`⚠️ גיבוי אחרון: ${dateStr} (לפני ${days} ימים) — מומלץ לגבות`;el.style.color='var(--ad)'}
+  else{el.innerHTML=`✓ גיבוי אחרון: ${dateStr}`;el.style.color='var(--text3)'}
 }
 
 // ─── WIZARD ───────────────────────────────────────────────
@@ -1547,8 +1562,50 @@ function savePrompt(){}
 function mbgClick(){}
 function pickMedia(){}
 function setMediaChip(){}
-function exportData(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='prompthub.json';a.click();toast('✓ יוצא')}
-async function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async ev=>{try{const imp=JSON.parse(ev.target.result);const ps=imp.prompts||[];toast(`מייבא ${ps.length} פרומפטים...`);for(const p of ps){D.prompts.unshift(p);await svPrompt(p)}if(imp.topics)D.topics=imp.topics;if(imp.subs)D.subs=imp.subs;if(imp.tools)D.tools=imp.tools;svMeta();renderAll();toast(`✓ יובאו ${ps.length} פרומפטים`)}catch(er){toast('שגיאה בקובץ')}};r.readAsText(f)}
+function exportData(){
+  const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  const dateStr=new Date().toISOString().slice(0,10);
+  a.href=URL.createObjectURL(b);
+  a.download=`prompthub-backup-${dateStr}.json`;
+  a.click();
+  localStorage.setItem('ph_last_backup',String(Date.now()));
+  updateBackupSt();
+  toast(`✓ יוצאו ${D.prompts.length} פרומפטים`);
+}
+async function importJSON(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=async ev=>{
+    let imp;
+    try{imp=JSON.parse(ev.target.result)}
+    catch(er){toast('שגיאה: הקובץ אינו JSON תקין');e.target.value='';return}
+    const ps=Array.isArray(imp.prompts)?imp.prompts:null;
+    if(!ps){toast('שגיאה: לא נמצאו פרומפטים בקובץ הזה');e.target.value='';return}
+    if(!ps.length){toast('הקובץ לא מכיל פרומפטים לייבוא');e.target.value='';return}
+    if(!confirm(`ייבוא יוסיף ${ps.length} פרומפטים לחשבון הנוכחי.\nפרומפטים קיימים לא יימחקו ולא יושפעו.\nלהמשיך?`)){e.target.value='';return}
+    toast(`מייבא ${ps.length} פרומפטים...`);
+    let ok=0,fail=0;
+    for(const raw of ps){
+      // Force every imported prompt to be created as a brand-new row —
+      // never reuse id/_saved from the source file, or a PATCH could
+      // silently match zero rows (wrong user/account) and look like
+      // success while saving nothing.
+      const p={...raw};
+      delete p.id;delete p._saved;
+      p.created=p.created||Date.now();
+      D.prompts.unshift(p);
+      try{await svPrompt(p);if(p._saved)ok++;else fail++}
+      catch(er){fail++}
+    }
+    if(imp.topics)D.topics=imp.topics;if(imp.subs)D.subs=imp.subs;if(imp.tools)D.tools=imp.tools;
+    svMeta();renderAll();
+    e.target.value='';
+    if(fail===0)toast(`✓ יובאו ${ok} פרומפטים בהצלחה`);
+    else toast(`יובאו ${ok} מתוך ${ps.length} (${fail} נכשלו)`);
+  };
+  r.readAsText(f);
+}
 function renderAll(){renderMainTabs();updateStats();updateFilters();renderCards();updateEmptyState();if(treeMode)renderTree();checkBanner()}
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
