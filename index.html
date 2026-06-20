@@ -304,6 +304,23 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     <button class="btn bp" id="loginBtn" onclick="sendMagicLink()" style="padding:.75rem 1rem;justify-content:center">שלח קישור התחברות</button>
     <div id="loginStatus" style="font-size:12px;color:var(--purple);text-align:center;min-height:16px"></div>
   </div>
+  <div onclick="toggleHelp()" style="font-size:12px;color:var(--text3);text-decoration:underline;cursor:pointer;margin-top:4px">📖 הוראות הפעלה - לחץ עלי</div>
+</div>
+
+<!-- HELP OVERLAY -->
+<div id="helpOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:950;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)toggleHelp()">
+  <div style="background:var(--bg);border-radius:16px;padding:1.25rem;max-width:340px;max-height:80vh;overflow-y:auto;width:100%">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <strong style="font-size:15px">📖 הוראות הפעלה</strong>
+      <button class="btn bico bs" onclick="toggleHelp()" style="height:30px;width:30px"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;display:flex;flex-direction:column;gap:10px">
+      <div><strong>🔗 איך נכנסים?</strong><br>אין סיסמה. מזינים מייל, מקבלים קישור חד-פעמי במייל, ולוחצים עליו. החיבור נשאר זכור בדפדפן הזה אחר כך.</div>
+      <div><strong>🔒 הפרומפטים שלי פרטיים?</strong><br>כן. כל מייל = חשבון נפרד לחלוטין. אף משתמש אחר לא יכול לראות את הפרומפטים שלך.</div>
+      <div><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות (תמונה, תמונה עם רפרנס, וקוד) כדי שתכיר את הממשק. אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
+      <div><strong>➕ איך מוסיפים פרומפט משלי?</strong><br>כפתור <strong>+</strong> להוספה ידנית מהירה, או <strong>ייבוא AI</strong> להעלאת קובץ/צילום מסך עם הרבה פרומפטים בבת אחת.</div>
+    </div>
+  </div>
 </div>
 
 <nav id="navBar">
@@ -473,6 +490,10 @@ async function showApp(){
   document.getElementById('mainRoot').style.display='';
   document.getElementById('userEmailLbl').textContent=SESSION.user.email;
   await ld();renderAll();loadKeyFromSB();
+}
+function toggleHelp(){
+  const e=document.getElementById('helpOverlay');
+  e.style.display=(e.style.display==='flex')?'none':'flex';
 }
 async function sendMagicLink(){
   const email=document.getElementById('loginEmail').value.trim();
