@@ -535,7 +535,7 @@ function promptToRow(p){
     tool:p.tool||null,
     type:p.type||'כללי',
     media_type:p.media||'טקסט',
-    tags:p.tags?p.tags.split(',').map(t=>t.trim()).filter(Boolean):null,
+    tags:p.tags?p.tags.split(',').map(t=>t.trim().replace(/^#+/,'')).filter(Boolean):null,
     extra:Object.keys(extra).length?extra:null
   };
 }
@@ -1445,7 +1445,8 @@ function awNext0(){
   AW.step=1;renderAW();
 }
 function awNext1(){
-  AW.data.tags=document.getElementById('awTags')?.value.trim()||'';
+  const raw=document.getElementById('awTags')?.value.trim()||'';
+  AW.data.tags=raw.split(',').map(t=>t.trim().replace(/^#+/,'')).filter(Boolean).join(', ');
   AW.step=2;renderAW();
 }
 function awAddTag(t){
