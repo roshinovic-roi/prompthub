@@ -615,6 +615,24 @@ async function delFromSB(id){
 // sv() — kept for meta only
 function sv(){svMeta()}
 function uid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:r&0x3|0x8).toString(16)})}
+
+async function loadSamplePrompts(){
+  const samples=[
+    {media:'תמונה',kind:'כללי',tags:'קפה, פריז, פורטרט',
+      content:'תיאור פוטוריאליסטי של אישה צעירה יושבת בבית קפה פריזאי, אור טבעי דרך החלון, סטייל עיתונאי, עדשת 35mm, צבעים חמים.'},
+    {media:'תמונה',kind:'רפרנס',tags:'רפרנס, סטודיו, שחור-לבן',
+      content:'השתמש בתמונת הרפרנס המצורפת ושמור על זהות הפנים בדיוק. צלם פורטרט סטודיו עם תאורה דרמטית שחור-לבן, רקע כהה אחיד, מבט ישיר למצלמה.'},
+    {media:'קוד',kind:'כללי',tags:'קוד, javascript, utility',
+      content:'כתוב פונקציית JavaScript שמקבלת מערך אובייקטים ומחזירה אותם מקובצים (grouped) לפי שדה נתון, עם טיפוסי TypeScript גנריים.'}
+  ];
+  for(const s of samples){
+    const obj={id:uid(),title:'',topic:'',sub:'',tool:'',type:'כללי',media:s.media,content:s.content,tags:s.tags,kind:s.kind,created:Date.now()};
+    D.prompts.unshift(obj);
+    await svPrompt(obj);
+  }
+  renderAll();
+  toast('✓ נטענו 3 פרומפטי דוגמה - אפשר למחוק ולהתחיל משלך בכל רגע');
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
 function getKey(){return localStorage.getItem('ph_key')||''}
@@ -1216,7 +1234,20 @@ function renderCards(){
     return true;
   }).sort((a,b)=>b.created-a.created);
   const c=document.getElementById('cardsWrap');
-  if(!list.length){c.innerHTML=`<div class="empty"><i class="ti ti-database-off"></i><p>${D.prompts.length?'לא נמצאו תוצאות':'לחץ <strong>ייבוא AI</strong> או <strong>+</strong> להתחלה'}</p></div>`;return}
+  if(!list.length){
+    if(!D.prompts.length){
+      c.innerHTML=`<div class="empty" style="max-width:380px;margin:0 auto">
+        <i class="ti ti-sparkles" style="color:var(--purple)"></i>
+        <p style="font-weight:700;font-size:15px;margin-bottom:4px">ברוך הבא ל-PromptHub!</p>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:14px">כל הפרומפטים שלך במקום אחד - סווג, חפש, וצור גרסאות חדשות ב-AI. נסה עם 3 דוגמאות, או תתחיל ריק.</p>
+        <button class="btn bp" onclick="loadSamplePrompts()" style="margin:0 auto 8px;gap:6px"><i class="ti ti-wand"></i> טען 3 פרומפטי דוגמה</button>
+        <p style="font-size:11px;color:var(--text3)">או לחץ <strong>ייבוא AI</strong> / <strong>+</strong> מעלה כדי להתחיל בעצמך</p>
+      </div>`;
+      return;
+    }
+    c.innerHTML=`<div class="empty"><i class="ti ti-database-off"></i><p>לא נמצאו תוצאות</p></div>`;
+    return;
+  }
   c.innerHTML=list.map(p=>{
     const tags=(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
     const mode=p.adapted?(p.viewMode||(p.kind==='רפרנס'?'original':'adapted')):'original';
