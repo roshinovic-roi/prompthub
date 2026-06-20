@@ -318,7 +318,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     <div style="font-size:13px;color:var(--text2);line-height:1.6;display:flex;flex-direction:column;gap:10px">
       <div><strong>🔗 איך נכנסים?</strong><br>אין סיסמה. מזינים מייל, מקבלים קישור חד-פעמי במייל, ולוחצים עליו. החיבור נשאר זכור בדפדפן הזה אחר כך.</div>
       <div><strong>🔒 הפרומפטים שלי פרטיים?</strong><br>כן. כל מייל = חשבון נפרד לחלוטין. אף משתמש אחר לא יכול לראות את הפרומפטים שלך.</div>
-      <div><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות (תמונה, תמונה עם רפרנס, וקוד) כדי שתכיר את הממשק. אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
+      <div id="helpSampleQ"><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות (תמונה, תמונה עם רפרנס, וקוד) כדי שתכיר את הממשק. אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
       <div><strong>➕ איך מוסיפים פרומפט משלי?</strong><br>כפתור <strong>+</strong> להוספה ידנית מהירה, או <strong>ייבוא AI</strong> להעלאת קובץ/צילום מסך עם הרבה פרומפטים בבת אחת.</div>
     </div>
   </div>
@@ -504,7 +504,10 @@ function toggleHelp(){
   const e=document.getElementById('helpOverlay');
   const opening=e.style.display!=='flex';
   e.style.display=opening?'flex':'none';
-  if(!opening){
+  if(opening){
+    const hasPrompts=(typeof D!=='undefined'&&D.prompts&&D.prompts.length>0);
+    document.getElementById('helpSampleQ').style.display=hasPrompts?'none':'block';
+  } else {
     localStorage.setItem('ph_seen_help','1');
     renderLoginGate();
   }
