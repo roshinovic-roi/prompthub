@@ -94,5 +94,29 @@ export default async function handler(req, res) {
     }
   }
 
+  // 3. Log this lead event to Supabase for the dashboard
+  try {
+    const SUPA_URL = 'https://qfjngabqhxbpnvfssijq.supabase.co';
+    const SUPA_KEY = 'sb_publishable__VyQ0LyxUDbLQosfGAEudg_r-AKm8cq';
+    await fetch(`${SUPA_URL}/rest/v1/lead_events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`,
+      },
+      body: JSON.stringify({
+        email,
+        source_url: event_source_url || '',
+        capi_success: !!(results.capi && results.capi.events_received),
+        capi_message: JSON.stringify(results.capi),
+        telegram_success: !!(results.telegram && results.telegram.ok),
+        telegram_message: JSON.stringify(results.telegram),
+      }),
+    });
+  } catch (err) {
+    console.log('[lead] supabase log error:', err.message);
+  }
+
   return res.status(200).json({ ok: true, results });
 }
