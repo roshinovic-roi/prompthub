@@ -87,19 +87,30 @@ function fmtTime(iso){
 
 async function load(){
   document.getElementById('cards').innerHTML = '<div class="loading">טוען נתונים...</div>';
-  const res = await fetch(`${SUPA_URL}/rest/v1/lead_events?select=*&order=created_at.desc&limit=200`, {
-    headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
-  });
-  const rows = await res.json();
 
+  const [leadsRes, viewsRes] = await Promise.all([
+    fetch(`${SUPA_URL}/rest/v1/lead_events?select=*&order=created_at.desc&limit=200`, {
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+    }),
+    fetch(`${SUPA_URL}/rest/v1/page_views?select=id`, {
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+    })
+  ]);
+  const rows = await leadsRes.json();
+  const views = await viewsRes.json();
+
+  const totalViews = views.length;
   const total = rows.length;
   const capiOk = rows.filter(r => r.capi_success).length;
   const tgOk = rows.filter(r => r.telegram_success).length;
   const capiRate = total ? Math.round((capiOk/total)*100) : 0;
   const tgRate = total ? Math.round((tgOk/total)*100) : 0;
+  const convRate = totalViews ? Math.round((total/totalViews)*100) : 0;
 
   document.getElementById('cards').innerHTML = `
-    <div class="card"><div class="num">${total}</div><div class="lbl">סה"כ הרשמות</div></div>
+    <div class="card"><div class="num">${totalViews}</div><div class="lbl">כניסות לדף הנחיתה</div></div>
+    <div class="card"><div class="num">${total}</div><div class="lbl">סה"כ הרשמות (מייל)</div></div>
+    <div class="card good"><div class="num">${convRate}%</div><div class="lbl">אחוז המרה (הרשמות/כניסות)</div></div>
     <div class="card ${capiRate>=80?'good':'bad'}"><div class="num">${capiRate}%</div><div class="lbl">הצלחת CAPI (${capiOk}/${total})</div></div>
     <div class="card ${tgRate>=80?'good':'bad'}"><div class="num">${tgRate}%</div><div class="lbl">הצלחת טלגרם (${tgOk}/${total})</div></div>
   `;
