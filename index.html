@@ -1157,6 +1157,12 @@ function updateStats(){
     <div class="stat" id="st-ng" onclick="toggleTree('media')"><div style="font-size:16px;margin-bottom:3px">🎬</div><div class="stat-n">${vid}</div><div class="stat-l">וידאו/אודיו/קוד</div></div>`;
   if(treeMode){document.getElementById('st-ng')?.classList.add('on')}
 }
+function updateEmptyState(){
+  const empty=!D.prompts.length;
+  const sr=document.getElementById('statsRow'); if(sr)sr.style.display=empty?'none':'';
+  const mt=document.querySelector('.main-tabs'); if(mt)mt.style.display=empty?'none':'';
+  const tb=document.querySelector('.toolbar'); if(tb)tb.style.display=empty?'none':'';
+}
 function updateFilters(){
   // Media filter is static, nothing dynamic to update
 }
@@ -1493,7 +1499,7 @@ function pickMedia(){}
 function setMediaChip(){}
 function exportData(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='prompthub.json';a.click();toast('✓ יוצא')}
 async function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=async ev=>{try{const imp=JSON.parse(ev.target.result);const ps=imp.prompts||[];toast(`מייבא ${ps.length} פרומפטים...`);for(const p of ps){D.prompts.unshift(p);await svPrompt(p)}if(imp.topics)D.topics=imp.topics;if(imp.subs)D.subs=imp.subs;if(imp.tools)D.tools=imp.tools;svMeta();renderAll();toast(`✓ יובאו ${ps.length} פרומפטים`)}catch(er){toast('שגיאה בקובץ')}};r.readAsText(f)}
-function renderAll(){renderMainTabs();updateStats();updateFilters();renderCards();if(treeMode)renderTree();checkBanner()}
+function renderAll(){renderMainTabs();updateStats();updateFilters();renderCards();updateEmptyState();if(treeMode)renderTree();checkBanner()}
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
 
