@@ -298,6 +298,14 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
   .tc{border-left:none;border-top:0.5px solid var(--border)}
   .tc:first-child{border-top:none}
 }
+/* ── FLOATING CONTEXTUAL TIPS ── */
+.float-tip{position:fixed;z-index:980;max-width:280px;animation:tipIn .18s ease-out}
+.float-tip-card{background:var(--purple);color:#fff;border-radius:14px;padding:.85rem .95rem;box-shadow:0 8px 28px rgba(0,0,0,.28);font-size:13px;line-height:1.5}
+.float-tip-card strong{display:block;font-size:13.5px;margin-bottom:4px}
+.float-tip-card button{margin-top:.6rem;background:#fff;color:var(--purple);border:none;border-radius:8px;padding:.4rem .9rem;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.float-tip-arrow{position:absolute;width:14px;height:14px;background:var(--purple);transform:rotate(45deg)}
+.tip-highlight{position:relative;outline:3px solid var(--purple);outline-offset:2px;border-radius:10px;z-index:970}
+@keyframes tipIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -341,6 +349,9 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
   </div>
   <div class="nav-r">
     <span id="userEmailLbl" style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button class="btn bico bs" onclick="toggleHelp()" title="עזרה">
+      <i class="ti ti-help-circle"></i>
+    </button>
     <button class="btn bico bs" onclick="doLogout()" title="התנתק">
       <i class="ti ti-logout"></i>
     </button>
@@ -502,6 +513,7 @@ async function showApp(){
   document.getElementById('mainRoot').style.display='';
   document.getElementById('userEmailLbl').textContent=SESSION.user.email;
   await ld();renderAll();loadKeyFromSB();
+  setTimeout(()=>queueTip('privacy','.logo','🔒 הפרומפטים שלי פרטיים?','כן. כל מייל = חשבון נפרד לחלוטין. אף משתמש אחר לא יכול לראות את הפרומפטים שלך.','bottom'),200);
 }
 function renderLoginGate(){
   const seen=localStorage.getItem('ph_seen_help')==='1';
@@ -509,14 +521,11 @@ function renderLoginGate(){
   document.getElementById('loginFormWrap').style.display=seen?'flex':'none';
   document.getElementById('loginHelpLink').style.display=seen?'block':'none';
 }
-function toggleHelp(forceShowSamples){
+function toggleHelp(){
   const e=document.getElementById('helpOverlay');
-  const opening=e.style.display!=='flex'||forceShowSamples;
+  const opening=e.style.display!=='flex';
   e.style.display=opening?'flex':'none';
-  if(opening){
-    const hasPrompts=(typeof D!=='undefined'&&D.prompts&&D.prompts.length>0);
-    document.getElementById('helpSampleQ').style.display=(forceShowSamples||!hasPrompts)?'block':'none';
-  } else {
+  if(!opening){
     localStorage.setItem('ph_seen_help','1');
     renderLoginGate();
   }
@@ -686,7 +695,11 @@ async function loadSamplePrompts(){
   }
   renderAll();
   toast('✓ נטענו 3 פרומפטי דוגמה - אפשר למחוק ולהתחיל משלך בכל רגע');
-  setTimeout(()=>toggleHelp(true),350);
+  setTimeout(()=>{
+    queueTip('apikey','#noKeyBanner','🔑 מה זה ה-API Key?','ההודעה הצהובה היא רק לתכונה אופציונלית - ייבוא AI חכם של קבצים/תמונות. אם רק מוסיפים ידנית (כפתור +) - אין צורך בו בכלל.','bottom');
+    queueTip('kind','.adapt-btn','🔵 "צור גרסה כללית" / 🟣 "צור גרסה מותאמת לרפרנס"','פרומפט <strong>כללי</strong> מתאר תמונה בלי תלות בתמונה קיימת. פרומפט <strong>רפרנס</strong> כתוב כך שתעלה תמונה משלך (למשל הפרצוף שלך) וה-AI ישתמש בה כבסיס. הכפתור יוצר אוטומטית (ע"י Claude) את הגרסה השנייה מהקיימת.','top');
+    queueTip('addown','button[onclick="openWizard()"]','➕ איך מוסיפים פרומפט משלי?','כפתור <strong>+</strong> להוספה ידנית מהירה, או <strong>ייבוא AI</strong> כאן להעלאת קובץ/צילום מסך עם הרבה פרומפטים בבת אחת.','bottom');
+  },500);
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
@@ -726,6 +739,44 @@ function renderKeySt(){
   el.innerHTML=k?`<i class="ti ti-circle-check" style="color:var(--gd)"></i><span class="key-ok">מפתח פעיל</span>`:`<span class="key-no">לא מוגדר</span>`;
 }
 function checkBanner(){document.getElementById('noKeyBanner').style.display=getKey()?'none':'flex'}
+
+// ─── CONTEXTUAL ONE-TIME TIPS ────────────────────────────
+let tipQueue=[];
+function queueTip(key,selector,title,body,placement){
+  if(localStorage.getItem('ph_tip_'+key)==='1')return;
+  if(tipQueue.find(t=>t.key===key))return;
+  tipQueue.push({key,selector,title,body,placement:placement||'bottom'});
+  if(tipQueue.length===1)showNextTip();
+}
+function showNextTip(){
+  document.getElementById('floatTip')?.remove();
+  document.querySelectorAll('.tip-highlight').forEach(e=>e.classList.remove('tip-highlight'));
+  if(!tipQueue.length)return;
+  const t=tipQueue[0];
+  const anchor=document.querySelector(t.selector);
+  if(!anchor){tipQueue.shift();showNextTip();return;}
+  const r0=anchor.getBoundingClientRect();
+  if(r0.width===0&&r0.height===0){tipQueue.shift();showNextTip();return;}
+  anchor.classList.add('tip-highlight');
+  const r=anchor.getBoundingClientRect();
+  const tip=document.createElement('div');
+  tip.id='floatTip';tip.className='float-tip';
+  tip.innerHTML=`<div class="float-tip-card"><strong>${t.title}</strong><p style="margin:0">${t.body}</p><button onclick="dismissTipNow()">הבנתי</button></div>`;
+  document.body.appendChild(tip);
+  const w=Math.min(280,window.innerWidth-32);
+  tip.style.width=w+'px';
+  let left=Math.min(Math.max(8,r.left+r.width/2-w/2),window.innerWidth-w-8);
+  let top;
+  if(t.placement==='top'){top=r.top-tip.offsetHeight-14;if(top<8)top=r.bottom+14}
+  else{top=r.bottom+14;if(top+tip.offsetHeight>window.innerHeight-8)top=r.top-tip.offsetHeight-14}
+  tip.style.left=left+'px';tip.style.top=Math.max(8,top)+'px';
+  anchor.scrollIntoView({block:'center',behavior:'smooth'});
+}
+function dismissTipNow(){
+  const t=tipQueue.shift();
+  if(t)localStorage.setItem('ph_tip_'+t.key,'1');
+  showNextTip();
+}
 function toggleSettings(){
   const p=document.getElementById('settingsWrap'),show=p.style.display==='none';
   p.style.display=show?'block':'none';
@@ -1287,9 +1338,10 @@ function renderCards(){
         <i class="ti ti-sparkles" style="color:var(--purple)"></i>
         <p style="font-weight:700;font-size:15px;margin-bottom:4px">ברוך הבא ל-PromptHub!</p>
         <p style="font-size:13px;color:var(--text3);margin-bottom:14px">כל הפרומפטים שלך במקום אחד - סווג, חפש, וצור גרסאות חדשות ב-AI.<br>לא בטוח איך מתחילים? לחיצה אחת תוסיף 3 פרומפטים לדוגמה (כללי ורפרנס, עם תמונות אמיתיות) כדי שתכיר את המסכים והאפשרויות - אפשר למחוק אותם בכל רגע אחר כך.</p>
-        <button class="btn bp" onclick="loadSamplePrompts()" style="margin:0 auto 8px;gap:6px"><i class="ti ti-wand"></i> טען 3 פרומפטי דוגמה</button>
+        <button class="btn bp" id="sampleBtn" onclick="loadSamplePrompts()" style="margin:0 auto 8px;gap:6px"><i class="ti ti-wand"></i> טען 3 פרומפטי דוגמה</button>
         <p style="font-size:11px;color:var(--text3)">או לחץ <strong>ייבוא AI</strong> / <strong>+</strong> מעלה כדי להתחיל בעצמך</p>
       </div>`;
+      setTimeout(()=>queueTip('samples_btn','#sampleBtn','✨ "טען 3 פרומפטי דוגמה" - מה זה?','כפתור שמוסיף 3 דוגמאות <strong>גנריות</strong> (לא קשורות לתחום שלך) כדי שתכיר את ההבדל בין "כללי" ל"רפרנס". אפשר למחוק בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.','top'),300);
       return;
     }
     c.innerHTML=`<div class="empty"><i class="ti ti-database-off"></i><p>לא נמצאו תוצאות</p></div>`;
