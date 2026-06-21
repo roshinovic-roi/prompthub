@@ -1205,14 +1205,14 @@ async function uploadImgToStorage(file,oldUrl){
 }
 
 // ─── TREE ─────────────────────────────────────────────────
-const TT={topics:'נושאים',tools:'כלים',types:'סוג פרומפט',neg:'פרומפטים שליליים',media:'סוג מדיה'};
+const TT={topics:'נושאים',tools:'כלים',types:'סוג פרומפט',neg:'פרומפטים שליליים',media:'סוג מדיה',tags:'תגיות'};
 const TI={'כללי':'ti-file-text','חיובי':'ti-circle-check','שלילי':'ti-circle-x','מערכת':'ti-settings'};
 function cbt(){const m={};D.prompts.forEach(p=>{if(p.topic)m[p.topic]=(m[p.topic]||0)+1});return m}
 function cbts(t){const m={};D.prompts.filter(p=>p.topic===t).forEach(p=>{if(p.sub)m[p.sub]=(m[p.sub]||0)+1});return m}
 function cbtool(){const m={};D.prompts.forEach(p=>{if(p.tool)m[p.tool]=(m[p.tool]||0)+1});return m}
 function cbtype(){const m={};D.prompts.forEach(p=>{const t=p.type||'כללי';m[t]=(m[t]||0)+1});return m}
 function cbneg(){const m={};D.prompts.filter(p=>p.type==='שלילי').forEach(p=>{if(p.topic)m[p.topic]=(m[p.topic]||0)+1});return m}
-function toggleTree(mode){if(treeMode===mode){closeTree();return}treeMode=mode;document.querySelectorAll('.stat').forEach(s=>s.classList.remove('on'));const map={topics:'st-t',tools:'st-tl',types:'st-n',neg:'st-ng'};document.getElementById(map[mode])?.classList.add('on');document.getElementById('treePanel').style.display='block';document.getElementById('treeTitle').textContent=TT[mode];renderTree()}
+function toggleTree(mode){if(treeMode===mode){closeTree();return}treeMode=mode;document.querySelectorAll('.stat').forEach(s=>s.classList.remove('on'));const map={topics:'st-t',tools:'st-tl',types:'st-n',neg:'st-ng',tags:'st-t'};document.getElementById(map[mode])?.classList.add('on');document.getElementById('treePanel').style.display='block';document.getElementById('treeTitle').textContent=TT[mode];renderTree()}
 function closeTree(){treeMode=null;document.querySelectorAll('.stat').forEach(s=>s.classList.remove('on'));document.getElementById('treePanel').style.display='none'}
 function renderTree(){
   const cols=document.getElementById('treeCols');
@@ -1237,8 +1237,20 @@ function renderTree(){
     let t='<div class="tc"><div class="tc-h">סוג מדיה</div>';
     ['טקסט','תמונה','וידאו','אודיו','קוד'].forEach(n=>{const c=mc[n]||0;t+=`<div class="ti${treeSel.media===n?' on':''}" onclick="tpmedia('${esc(n)}')"><span>${MEDIA_ICONS[n]||''} ${esc(n)}</span><span class="cn">${c}</span></div>`});
     cols.innerHTML=t+'</div>';
+  }else if(treeMode==='tags'){
+    const tc={};D.prompts.forEach(p=>(p.tags||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(tag=>{tc[tag]=(tc[tag]||0)+1}));
+    const sorted=Object.entries(tc).sort((a,b)=>b[1]-a[1]);
+    let t='<div class="tc"><div class="tc-h">תגיות</div>';
+    if(sorted.length)sorted.forEach(([n,c])=>{t+=`<div class="ti" onclick="tpTag('${esc(n)}')"><span>#${esc(n)}</span><span class="cn">${c}</span></div>`});
+    else t+='<div class="te">אין תגיות עדיין</div>';
+    cols.innerHTML=t+'</div>';
   }
   renderTreeBar();
+}
+function tpTag(n){
+  document.getElementById('qInput').value='#'+n;
+  closeTree();
+  renderCards();
 }
 function tpt(n){treeSel.topic=treeSel.topic===n?null:n;treeSel.sub=null;applyTree();renderTree()}
 function tps(n){treeSel.sub=treeSel.sub===n?null:n;applyTree();renderTree()}
@@ -1266,16 +1278,23 @@ function tclear(k){treeSel[k]=null;if(k==='topic')treeSel.sub=null;applyTree();i
 function tclearAll(){treeSel={topic:null,sub:null,tool:null,type:null,media:null};applyTree();if(treeMode)renderTree()}
 
 // ─── STATS ────────────────────────────────────────────────
+let kindFilter=null;
 function updateStats(){
   const total=D.prompts.length;
   const allTags=[...new Set(D.prompts.flatMap(p=>(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))];
   const gen=D.prompts.filter(p=>p.kind!=='רפרנס').length;
   const ref=D.prompts.filter(p=>p.kind==='רפרנס').length;
   document.getElementById('statsRow').innerHTML=`
-    <div class="stat" id="st-n"><i class="ti ti-prompt"></i><div class="stat-n">${total}</div><div class="stat-l">פרומפטים</div></div>
-    <div class="stat" id="st-t"><i class="ti ti-hash"></i><div class="stat-n">${allTags.length}</div><div class="stat-l">תגיות</div></div>
-    <div class="stat" id="st-tl"><div style="font-size:16px;margin-bottom:3px">🔵</div><div class="stat-n">${gen}</div><div class="stat-l">כללי</div></div>
-    <div class="stat" id="st-ng"><div style="font-size:16px;margin-bottom:3px">🟣</div><div class="stat-n">${ref}</div><div class="stat-l">רפרנס</div></div>`;
+    <div class="stat${kindFilter?'':' on'}" id="st-n" onclick="setKindFilter(null)"><i class="ti ti-prompt"></i><div class="stat-n">${total}</div><div class="stat-l">פרומפטים</div></div>
+    <div class="stat" id="st-t" onclick="toggleTree('tags')"><i class="ti ti-hash"></i><div class="stat-n">${allTags.length}</div><div class="stat-l">תגיות</div></div>
+    <div class="stat${kindFilter==='כללי'?' on':''}" id="st-tl" onclick="setKindFilter('כללי')"><div style="font-size:16px;margin-bottom:3px">🔵</div><div class="stat-n">${gen}</div><div class="stat-l">כללי</div></div>
+    <div class="stat${kindFilter==='רפרנס'?' on':''}" id="st-ng" onclick="setKindFilter('רפרנס')"><div style="font-size:16px;margin-bottom:3px">🟣</div><div class="stat-n">${ref}</div><div class="stat-l">רפרנס</div></div>`;
+}
+function setKindFilter(k){
+  kindFilter=kindFilter===k?null:k;
+  closeTree();
+  updateStats();
+  renderCards();
 }
 function updateEmptyState(){
   const empty=!D.prompts.length;
@@ -1320,6 +1339,8 @@ function renderCards(){
   const tagSearch=q.startsWith('#')?q.slice(1).toLowerCase():null;
   const qLow=q.toLowerCase();
   let list=D.prompts.filter(p=>{
+    if(kindFilter==='כללי'&&p.kind==='רפרנס')return false;
+    if(kindFilter==='רפרנס'&&p.kind!=='רפרנס')return false;
     if(fImg==='yes'&&!p.refImage&&!p.refImageAdapted)return false;
     if(fImg==='no'&&(p.refImage||p.refImageAdapted))return false;
     if(tagSearch){
