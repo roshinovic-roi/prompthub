@@ -101,7 +101,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
 .fclr{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
 
 /* ── TOOLBAR ── */
-.main-tabs{display:flex;gap:6px;margin-bottom:.7rem}
+
 .main-tab{flex:1;background:var(--bg2);border:none;border-radius:10px;padding:.6rem 0;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;font-family:inherit;transition:background .15s,color .15s}
 .main-tab.on{background:var(--purple);color:#fff}
 .toolbar{display:flex;gap:7px;margin-bottom:.85rem;flex-wrap:wrap}
@@ -326,7 +326,7 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     <div style="font-size:13px;color:var(--text2);line-height:1.6;display:flex;flex-direction:column;gap:10px">
       <div><strong>🔗 איך נכנסים?</strong><br>אין סיסמה. מזינים מייל, מקבלים קישור חד-פעמי במייל, ולוחצים עליו. החיבור נשאר זכור בדפדפן הזה אחר כך.</div>
       <div><strong>🔒 הפרומפטים שלי פרטיים?</strong><br>כן. כל מייל = חשבון נפרד לחלוטין. אף משתמש אחר לא יכול לראות את הפרומפטים שלך.</div>
-      <div id="helpSampleQ"><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות (תמונה, תמונה עם רפרנס, וקוד) כדי שתכיר את הממשק. אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
+      <div id="helpSampleQ"><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות תמונה (כללי ורפרנס) כדי שתכיר את הממשק. אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
       <div><strong>➕ איך מוסיפים פרומפט משלי?</strong><br>כפתור <strong>+</strong> להוספה ידנית מהירה, או <strong>ייבוא AI</strong> להעלאת קובץ/צילום מסך עם הרבה פרומפטים בבת אחת.</div>
     </div>
   </div>
@@ -400,14 +400,8 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     <i class="ti ti-chevron-left" style="margin-right:auto;opacity:.6"></i>
   </div>
 
-  <div class="main-tabs">
-    <button class="main-tab" id="mtVisual" onclick="setMainTab('visual')">🖼️ ויזואלי</button>
-    <button class="main-tab" id="mtText" onclick="setMainTab('text')">📝 טקסט</button>
-  </div>
-
   <div class="toolbar">
     <div class="sw"><i class="ti ti-search"></i><input type="text" placeholder="חיפוש או #תגית..." id="qInput" oninput="renderCards()"></div>
-    <select id="fMedia" onchange="renderCards()"></select>
     <select id="fHasImg" onchange="renderCards()">
       <option value="">כל הכרטיסים</option>
       <option value="yes">🖼️ עם תמונה</option>
@@ -674,14 +668,17 @@ function uid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
 async function loadSamplePrompts(){
   const samples=[
     {media:'תמונה',kind:'כללי',tags:'קפה, פריז, פורטרט',
-      content:'תיאור פוטוריאליסטי של אישה צעירה יושבת בבית קפה פריזאי, אור טבעי דרך החלון, סטייל עיתונאי, עדשת 35mm, צבעים חמים.'},
-    {media:'תמונה',kind:'רפרנס',tags:'רפרנס, סטודיו, שחור-לבן',
-      content:'השתמש בתמונת הרפרנס המצורפת ושמור על זהות הפנים בדיוק. צלם פורטרט סטודיו עם תאורה דרמטית שחור-לבן, רקע כהה אחיד, מבט ישיר למצלמה.'},
-    {media:'קוד',kind:'כללי',tags:'קוד, javascript, utility',
-      content:'כתוב פונקציית JavaScript שמקבלת מערך אובייקטים ומחזירה אותם מקובצים (grouped) לפי שדה נתון, עם טיפוסי TypeScript גנריים.'}
+      content:'תיאור פוטוריאליסטי של אישה צעירה יושבת בבית קפה פריזאי, אור טבעי דרך החלון, סטייל עיתונאי, עדשת 35mm, צבעים חמים.',
+      refImage:'https://d8j0ntlcm91z4.cloudfront.net/user_3DdvwDLnXbmxhaD3KfnmeJJ2gLl/hf_20260621_192049_3e7a11dc-200e-4c4f-91c1-cc39c27972a6.png'},
+    {media:'תמונה',kind:'רפרנס',tags:'רפרנס, ספורט, ארגנטינה',
+      content:'השתמש בתמונת הרפרנס המצורפת ושמור על זהות הפנים בדיוק. הצב את האדם באיצטדיון כדורגל לובש מדי נבחרת ארגנטינה, קהל ותאורת זרקורים ברקע, אווירת יום משחק.',
+      refImage:'https://d8j0ntlcm91z4.cloudfront.net/user_3DdvwDLnXbmxhaD3KfnmeJJ2gLl/hf_20260621_192053_09643238-0e44-48c6-a8f9-482c59d3fb80.png'},
+    {media:'תמונה',kind:'כללי',tags:'נוף, הרים, אגם',
+      content:'תיאור פוטוריאליסטי של נוף הרים מושלגים המשתקפים באגם הררי צלול, מדשאות ירוקות בקדמת התמונה, אור שעת זהב דרמטי.',
+      refImage:'https://d8j0ntlcm91z4.cloudfront.net/user_3DdvwDLnXbmxhaD3KfnmeJJ2gLl/hf_20260621_192208_cc100ac0-7671-46ce-8011-d0b9629b1cad.png'}
   ];
   for(const s of samples){
-    const obj={id:uid(),title:'',topic:'',sub:'',tool:'',type:'כללי',media:s.media,content:s.content,tags:s.tags,kind:s.kind,created:Date.now()};
+    const obj={id:uid(),title:'',topic:'',sub:'',tool:'',type:'כללי',media:s.media,content:s.content,tags:s.tags,kind:s.kind,refImage:s.refImage,created:Date.now()};
     D.prompts.unshift(obj);
     await svPrompt(obj);
   }
@@ -838,8 +835,7 @@ function rwiz(){
             <div style="min-width:0;flex:1">
               <div class="wiz-t">${esc(p.content.slice(0,50))}${p.content.length>50?'...':''}</div>
               <div class="wiz-p">${esc(p.content.slice(50,130))}...</div>
-              ${sugg.media||sTags.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:.35rem">
-                ${sugg.media?`<span class="badge bmedia">${MEDIA_ICONS[sugg.media]||''} ${esc(sugg.media)}</span>`:''}
+              ${sTags.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:.35rem">
                 ${sTags.map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
               </div>`:''}
             </div>
@@ -857,9 +853,9 @@ function rwiz(){
     const pos=selList.indexOf(W.curIdx)+1;
     const cd=W.curData;
     const sugg=cd._suggestions||{};
-    // Auto-apply suggested tags and media if not already set
+    // Auto-apply suggested tags if not already set
     if(!cd._applied&&sugg.tags){cd.tags=sugg.tags;cd._applied=true;}
-    if(!cd._applied_media&&sugg.media){cd.media=sugg.media;cd._applied_media=true;}
+    cd.media='תמונה';
     const allTags=[...new Set(D.prompts.flatMap(p2=>(p2.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))].slice(0,15);
     B.innerHTML=`
       <div class="prog-dots">${selList.map(idx=>`<div class="pd${idx===W.curIdx?' cur':W.results[idx]?' done':''}"></div>`).join('')}</div>
@@ -870,13 +866,6 @@ function rwiz(){
         <label>תגיות</label>
         <input id="wTags" value="${esc(cd.tags||sugg.tags||'')}" placeholder="תגית1, תגית2...">
         ${allTags.length?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:.4rem">${allTags.map(t=>`<button class="tag" onclick="(function(){const inp=document.getElementById('wTags');const cur=(inp.value||'').split(',').map(x=>x.trim()).filter(Boolean);if(!cur.includes('${esc(t)}')){cur.push('${esc(t)}');inp.value=cur.join(', ');}})()">+#${esc(t)}</button>`).join('')}</div>`:''}
-      </div>
-      <div class="field">
-        <label>סוג מדיה</label>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:2px">
-          ${['טקסט','תמונה','וידאו','אודיו','קוד'].map(m=>`<div class="media-chip${(cd.media||sugg.media||'טקסט')===m?' sel':''}" onclick="this.parentElement.querySelectorAll('.media-chip').forEach(c=>c.classList.remove('sel'));this.classList.add('sel');document.getElementById('wMedia').value='${m}'">${m==='טקסט'?'📝':m==='תמונה'?'🖼️':m==='וידאו'?'🎬':m==='אודיו'?'🎵':'💻'}<br><span>${m}</span></div>`).join('')}
-        </div>
-        <input type="hidden" id="wMedia" value="${esc(cd.media||sugg.media||'טקסט')}">
       </div>`;
     F.innerHTML=`
       <button class="btn bs" onclick="skipCur()"><i class="ti ti-skip-forward"></i> דלג</button>
@@ -912,7 +901,6 @@ function rwiz(){
         <div class="sum-item">
           <div class="sum-title">${esc(W.prompts[idx].content.slice(0,60))}${W.prompts[idx].content.length>60?'...':''}</div>
           <div class="sum-badges">
-            ${r.media&&r.media!=='טקסט'?`<span class="badge bmedia">${MEDIA_ICONS[r.media]||''} ${esc(r.media)}</span>`:''}
             ${(r.tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
             ${r.addRef?`<span class="badge bref"><i class="ti ti-photo" style="font-size:9px"></i> +רפרנס</span>`:''}
           </div>
@@ -975,15 +963,16 @@ async function sendTextChunked(text){
 async function sendToAIChunk(text){
   const key=getKey();
   if(!key)return null;
-  const sys=`You extract prompts from text and return them as JSON.
+  const sys=`You extract IMAGE-GENERATION prompts from text and return them as JSON.
 Return ONLY a JSON array, no markdown, no explanation, no code fences:
-[{"content":"full prompt text","suggestions":{"media":"טקסט|תמונה|וידאו|אודיו|קוד","tags":"tag1,tag2"}}]
+[{"content":"full prompt text","suggestions":{"tags":"tag1,tag2"}}]
 IMPORTANT RULES:
+- ONLY extract prompts meant for AI image generation tools (Midjourney, DALL-E, Flux, Stable Diffusion, Firefly, Ideogram, etc.) or prompts that clearly describe a visual scene/image to generate.
+- SKIP entirely any prompt meant for text/chat (ChatGPT/Claude), video (Runway/Kling/Sora), audio/music (Suno/Udio), or code generation — do not include them in the output at all.
 - If you find a positive prompt AND a negative prompt that belong together, merge them into ONE entry. Format: "[positive prompt]\n\nNegative prompt: [negative prompt]"
 - Do NOT create separate entries for positive/negative pairs
-- media: תמונה for image generation (Midjourney/DALL-E/Flux/SD), וידאו for video (Runway/Kling/Sora), אודיו for music, קוד for coding, טקסט for everything else
 - tags: 1-4 short descriptive tags (comma separated), based on content theme
-- Return empty array [] if no prompts found`;
+- Return empty array [] if no image-generation prompts found`;
   try{
     const r=await fetch('/api/claude',{
       method:'POST',
@@ -1001,13 +990,14 @@ IMPORTANT RULES:
 async function sendToAI(text,image){
   const key=getKey();
   if(!key){toast('הוסף API Key בהגדרות');W.step=0;rwiz();return}
-  const sys=`You extract prompts from text or images and return them as JSON.
+  const sys=`You extract IMAGE-GENERATION prompts from text or images and return them as JSON.
 Return ONLY a JSON array, no markdown, no explanation, no code fences:
-[{"content":"full prompt text","suggestions":{"media":"טקסט|תמונה|וידאו|אודיו|קוד","tags":"tag1,tag2"}}]
+[{"content":"full prompt text","suggestions":{"tags":"tag1,tag2"}}]
 IMPORTANT RULES:
+- ONLY extract prompts meant for AI image generation tools (Midjourney, DALL-E, Flux, Stable Diffusion, Firefly, Ideogram, etc.) or prompts that clearly describe a visual scene/image to generate.
+- SKIP entirely any prompt meant for text/chat (ChatGPT/Claude), video (Runway/Kling/Sora), audio/music (Suno/Udio), or code generation — do not include them in the output at all.
 - If you find a positive prompt AND a negative prompt that belong together, merge them into ONE entry. Format: "[positive prompt]\n\nNegative prompt: [negative prompt]"
 - Do NOT create separate entries for positive/negative pairs
-- media: תמונה for image generation (Midjourney/DALL-E/Flux/SD), וידאו for video (Runway/Kling/Sora), אודיו for music, קוד for coding, טקסט for everything else
 - tags: 1-4 short descriptive tags (comma separated), based on content theme`;
   const uc=[];
   if(image){uc.push({type:'image',source:{type:'base64',media_type:image.mt,data:image.b64}});uc.push({type:'text',text:'Extract all prompts from this image. Merge positive+negative pairs. Return JSON only.'})}
@@ -1082,7 +1072,7 @@ function acceptAllSuggestions(){
   if(!selList.length){toast('בחר לפחות פרומפט אחד');return}
   selList.forEach(idx=>{
     const sugg=W.prompts[idx].suggestions||{};
-    W.results[idx]={tags:sugg.tags||'',media:sugg.media||'טקסט'};
+    W.results[idx]={tags:sugg.tags||'',media:'תמונה'};
   });
   toast(`✓ ${selList.length} פרומפטים סווגו אוטומטית ע"י Claude`);
   W.step=4;rwiz();
@@ -1091,13 +1081,13 @@ function startClassify(){
   if(!W.sel.some(Boolean)){toast('בחר לפחות פרומפט אחד');return}
   W.curIdx=W.sel.findIndex(Boolean);
   const sugg=W.prompts[W.curIdx]?.suggestions||{};
-  W.curData={_suggestions:sugg,media:sugg.media||'טקסט',tags:sugg.tags||''};
+  W.curData={_suggestions:sugg,media:'תמונה',tags:sugg.tags||''};
   W.step=2;rwiz();
 }
 
 function collectW(){
   W.curData.tags=document.getElementById('wTags')?.value.trim()||'';
-  W.curData.media=document.getElementById('wMedia')?.value||'טקסט';
+  W.curData.media='תמונה';
 }
 function saveCur(){
   collectW();
@@ -1111,7 +1101,7 @@ function skipCur(){
 }
 function nextP(){
   const sl=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0),pos=sl.indexOf(W.curIdx);
-  if(pos<sl.length-1){W.curIdx=sl[pos+1];const sugg=W.prompts[W.curIdx]?.suggestions||{};W.curData=W.results[W.curIdx]||{_suggestions:sugg,media:sugg.media||'טקסט',tags:sugg.tags||''};W.step=2;rwiz()}
+  if(pos<sl.length-1){W.curIdx=sl[pos+1];const sugg=W.prompts[W.curIdx]?.suggestions||{};W.curData=W.results[W.curIdx]||{_suggestions:sugg,media:'תמונה',tags:sugg.tags||''};W.step=2;rwiz()}
   else{W.step=4;rwiz()}
 }
 function backClassify(){const sl=W.sel.map((s,i)=>s?i:-1).filter(i=>i>=0);W.curIdx=sl[sl.length-1];W.curData=W.results[W.curIdx]||{};W.step=2;rwiz()}
@@ -1128,7 +1118,7 @@ async function finalSave(){
   const newPrompts=[];
   toSave.forEach(([idx,r])=>{
     const p=W.prompts[idx];
-    const base={id:uid(),title:'',topic:'',sub:'',tool:'',type:'כללי',media:r.media||guessMedia('',p.content),content:p.content,tags:r.tags||'',created:Date.now()};
+    const base={id:uid(),title:'',topic:'',sub:'',tool:'',type:'כללי',media:'תמונה',content:p.content,tags:r.tags||'',created:Date.now()};
     newPrompts.push(base);
     D.prompts.unshift(base);
     if(r.addRef&&r.refUrl){const ref={...base,id:uid(),content:`[גרסה עם תמונת רפרנס]\n\nהשתמש בתמונה המצורפת כרפרנס לאדם המוצג.\n\n${p.content}`,refImage:r.refUrl,tags:(r.tags?r.tags+',':'')+'רפרנס'};newPrompts.push(ref);D.prompts.unshift(ref)}
@@ -1203,12 +1193,6 @@ function tptype(n){treeSel.type=treeSel.type===n?null:n;applyTree();renderTree()
 function tpneg(n){treeSel.topic=n;treeSel.type='שלילי';applyTree();renderTree()}
 function tpmedia(n){treeSel.media=treeSel.media===n?null:n;applyTree();renderTree()}
 function applyTree(){
-  if(treeSel.media){
-    const needsTab=VISUAL_MEDIA.includes(treeSel.media)?'visual':'text';
-    if(mainTab!==needsTab){mainTab=needsTab;localStorage.setItem('ph_maintab',needsTab);renderMainTabs()}
-  }
-  const fm=document.getElementById('fMedia');
-  if(fm)fm.value=treeSel.media||'';
   renderCards();
 }
 function renderTreeBar(){
@@ -1231,19 +1215,17 @@ function tclearAll(){treeSel={topic:null,sub:null,tool:null,type:null,media:null
 function updateStats(){
   const total=D.prompts.length;
   const allTags=[...new Set(D.prompts.flatMap(p=>(p.tags||'').split(',').map(t=>t.trim()).filter(Boolean)))];
-  const img=D.prompts.filter(p=>p.media==='תמונה').length;
-  const vid=D.prompts.filter(p=>p.media==='וידאו'||p.media==='אודיו'||p.media==='קוד').length;
+  const gen=D.prompts.filter(p=>p.kind!=='רפרנס').length;
+  const ref=D.prompts.filter(p=>p.kind==='רפרנס').length;
   document.getElementById('statsRow').innerHTML=`
     <div class="stat" id="st-n"><i class="ti ti-prompt"></i><div class="stat-n">${total}</div><div class="stat-l">פרומפטים</div></div>
-    <div class="stat" id="st-t" onclick="toggleTree('media')"><i class="ti ti-hash"></i><div class="stat-n">${allTags.length}</div><div class="stat-l">תגיות</div></div>
-    <div class="stat" id="st-tl" onclick="toggleTree('media')"><div style="font-size:16px;margin-bottom:3px">🖼️</div><div class="stat-n">${img}</div><div class="stat-l">תמונה</div></div>
-    <div class="stat" id="st-ng" onclick="toggleTree('media')"><div style="font-size:16px;margin-bottom:3px">🎬</div><div class="stat-n">${vid}</div><div class="stat-l">וידאו/אודיו/קוד</div></div>`;
-  if(treeMode){document.getElementById('st-ng')?.classList.add('on')}
+    <div class="stat" id="st-t"><i class="ti ti-hash"></i><div class="stat-n">${allTags.length}</div><div class="stat-l">תגיות</div></div>
+    <div class="stat" id="st-tl"><div style="font-size:16px;margin-bottom:3px">🔵</div><div class="stat-n">${gen}</div><div class="stat-l">כללי</div></div>
+    <div class="stat" id="st-ng"><div style="font-size:16px;margin-bottom:3px">🟣</div><div class="stat-n">${ref}</div><div class="stat-l">רפרנס</div></div>`;
 }
 function updateEmptyState(){
   const empty=!D.prompts.length;
   const sr=document.getElementById('statsRow'); if(sr)sr.style.display=empty?'none':'';
-  const mt=document.querySelector('.main-tabs'); if(mt)mt.style.display=empty?'none':'';
   const tb=document.querySelector('.toolbar'); if(tb)tb.style.display=empty?'none':'';
 }
 function updateFilters(){
@@ -1277,40 +1259,13 @@ function guessMedia(tool,content){
 }
 
 // ─── CARDS ────────────────────────────────────────────────
-let mainTab=localStorage.getItem('ph_maintab')||'visual';
-const VISUAL_MEDIA=['תמונה','וידאו'];
-const TEXT_MEDIA=['טקסט','קוד','אודיו'];
-function setMainTab(t){
-  mainTab=t;
-  localStorage.setItem('ph_maintab',t);
-  document.getElementById('fMedia').value='';
-  renderMainTabs();
-  renderCards();
-}
-function renderMainTabs(){
-  document.getElementById('mtVisual').classList.toggle('on',mainTab==='visual');
-  document.getElementById('mtText').classList.toggle('on',mainTab==='text');
-  const fm=document.getElementById('fMedia');
-  const opts=mainTab==='visual'
-    ?[['','כל הוויזואלי'],['תמונה','🖼️ תמונה'],['וידאו','🎬 וידאו']]
-    :[['','כל הטקסט'],['טקסט','📝 טקסט'],['קוד','💻 קוד'],['אודיו','🎵 אודיו']];
-  const cur=fm.value;
-  fm.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
-  if(opts.some(o=>o[0]===cur))fm.value=cur;
-}
-
 function renderCards(){
   const q=document.getElementById('qInput').value.trim();
-  const fMd=document.getElementById('fMedia').value;
   const fImg=document.getElementById('fHasImg').value;
-  const allowedMedia=mainTab==='visual'?VISUAL_MEDIA:TEXT_MEDIA;
   // Check if searching by hashtag
   const tagSearch=q.startsWith('#')?q.slice(1).toLowerCase():null;
   const qLow=q.toLowerCase();
   let list=D.prompts.filter(p=>{
-    const pMedia=p.media||'טקסט';
-    if(!allowedMedia.includes(pMedia))return false;
-    if(fMd&&pMedia!==fMd)return false;
     if(fImg==='yes'&&!p.refImage&&!p.refImageAdapted)return false;
     if(fImg==='no'&&(p.refImage||p.refImageAdapted))return false;
     if(tagSearch){
@@ -1328,7 +1283,7 @@ function renderCards(){
       c.innerHTML=`<div class="empty" style="max-width:380px;margin:0 auto">
         <i class="ti ti-sparkles" style="color:var(--purple)"></i>
         <p style="font-weight:700;font-size:15px;margin-bottom:4px">ברוך הבא ל-PromptHub!</p>
-        <p style="font-size:13px;color:var(--text3);margin-bottom:14px">כל הפרומפטים שלך במקום אחד - סווג, חפש, וצור גרסאות חדשות ב-AI.<br>לא בטוח איך מתחילים? לחיצה אחת תוסיף 3 פרומפטים לדוגמה (תמונה, תמונה עם רפרנס, וקוד) כדי שתכיר את המסכים והאפשרויות - אפשר למחוק אותם בכל רגע אחר כך.</p>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:14px">כל הפרומפטים שלך במקום אחד - סווג, חפש, וצור גרסאות חדשות ב-AI.<br>לא בטוח איך מתחילים? לחיצה אחת תוסיף 3 פרומפטים לדוגמה (כללי ורפרנס, עם תמונות אמיתיות) כדי שתכיר את המסכים והאפשרויות - אפשר למחוק אותם בכל רגע אחר כך.</p>
         <button class="btn bp" onclick="loadSamplePrompts()" style="margin:0 auto 8px;gap:6px"><i class="ti ti-wand"></i> טען 3 פרומפטי דוגמה</button>
         <p style="font-size:11px;color:var(--text3)">או לחץ <strong>ייבוא AI</strong> / <strong>+</strong> מעלה כדי להתחיל בעצמך</p>
       </div>`;
@@ -1357,9 +1312,7 @@ function renderCards(){
         </div>
       </div>`:`
       <div class="card-top">
-        <div class="meta">
-          ${p.media&&p.media!=='טקסט'?`<span class="badge bmedia">${MEDIA_ICONS[p.media]||''} ${esc(p.media)}</span>`:''}
-        </div>
+        <div class="meta"></div>
         <div class="actions">
           <button class="btn bico bs" onclick="document.getElementById('imgInp${p.id}').click()" style="padding:3px 5px" title="הוסף תמונה"><i class="ti ti-photo-plus" style="font-size:12px"></i></button>
           <button class="btn bico bs" onclick="editP('${p.id}')" style="padding:3px 5px"><i class="ti ti-edit" style="font-size:12px"></i></button>
@@ -1427,12 +1380,12 @@ function stag(t){document.getElementById('qInput').value='#'+t;renderCards()}
 function delP(id){if(!confirm('למחוק?'))return;D.prompts=D.prompts.filter(p=>p.id!==id);renderAll();toast('נמחק');delFromSB(id)}
 // ── ADD WIZARD (manual) ──────────────────────────────────
 let AW={step:0,data:{},editId:null};
-const AW_STEPS=['תוכן','תגיות','מדיה','תמונה','סיכום'];
+const AW_STEPS=['תוכן','תגיות','תמונה','סיכום'];
 
-function openModal(){AW={step:0,data:{media:'טקסט',content:'',tags:'',refImage:null},editId:null};document.getElementById('addBg').style.display='flex';renderAW()}
+function openModal(){AW={step:0,data:{media:'תמונה',content:'',tags:'',refImage:null},editId:null};document.getElementById('addBg').style.display='flex';renderAW()}
 function editP(id){
   const p=D.prompts.find(x=>x.id===id);if(!p)return;
-  AW={step:0,data:{media:p.media||guessMedia('',p.content),content:p.content||'',tags:p.tags||'',refImage:p.refImage||null},editId:id};
+  AW={step:0,data:{media:'תמונה',content:p.content||'',tags:p.tags||'',refImage:p.refImage||null},editId:id};
   document.getElementById('addBg').style.display='flex';renderAW();
 }
 function closeModal(){document.getElementById('addBg').style.display='none'}
@@ -1475,24 +1428,8 @@ function renderAW(){
     foot.innerHTML=`<button class="btn bs" onclick="AW.step=0;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awNext1()">הבא <i class="ti ti-arrow-left"></i></button>`;
   }
 
-  // STEP 2 – MEDIA
+  // STEP 2 – IMAGE
   else if(AW.step===2){
-    const medias=[{v:'טקסט',i:'📝',d:'ChatGPT, Claude'},{v:'תמונה',i:'🖼️',d:'Midjourney, Flux'},{v:'וידאו',i:'🎬',d:'Runway, Kling'},{v:'אודיו',i:'🎵',d:'Suno, Udio'},{v:'קוד',i:'💻',d:'Copilot, Cursor'}];
-    body.innerHTML=`
-      <div class="aw-q">🎨 סוג מדיה?</div>
-      <div class="aw-sub">מה הפלט של הפרומפט הזה?</div>
-      <div class="aw-grid-2">
-        ${medias.map(m=>`<div class="aw-step-btn${AW.data.media===m.v?' sel':''}" onclick="AW.data.media='${m.v}';renderAW()">
-          <i style="font-size:28px;display:block;margin-bottom:.35rem">${m.i}</i>
-          <div class="lbl">${m.v}</div>
-          <div class="sub">${m.d}</div>
-        </div>`).join('')}
-      </div>`;
-    foot.innerHTML=`<button class="btn bs" onclick="AW.step=1;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=3;renderAW()">הבא <i class="ti ti-arrow-left"></i></button>`;
-  }
-
-  // STEP 3 – IMAGE
-  else if(AW.step===3){
     body.innerHTML=`
       <div class="aw-q">🖼️ תמונה לדוגמה</div>
       <div class="aw-sub">העלה תמונה שייצרת מהפרומפט הזה – אופציונלי, ניתן לדלג</div>
@@ -1506,12 +1443,11 @@ function renderAW(){
           <span style="font-size:14px">הקש להעלאת תמונה</span>
           <input type="file" accept="image/*" style="display:none" onchange="awUploadImg(event)">
         </label>`}`;
-    foot.innerHTML=`<button class="btn bs" onclick="AW.step=2;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=4;renderAW()">${AW.data.refImage?'הבא':'דלג'} <i class="ti ti-arrow-left"></i></button>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=1;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="AW.step=3;renderAW()">${AW.data.refImage?'הבא':'דלג'} <i class="ti ti-arrow-left"></i></button>`;
   }
 
-  // STEP 4 – SUMMARY + SAVE
-  else if(AW.step===4){
-    const MICONS={טקסט:'📝',תמונה:'🖼️',וידאו:'🎬',אודיו:'🎵',קוד:'💻'};
+  // STEP 3 – SUMMARY + SAVE
+  else if(AW.step===3){
     const curTags=(AW.data.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
     const preview=AW.data.content.slice(0,180)+(AW.data.content.length>180?'...':'');
     body.innerHTML=`
@@ -1520,17 +1456,16 @@ function renderAW(){
       ${AW.data.refImage?`<img src="${AW.data.refImage}" style="max-width:100%;max-height:180px;border-radius:10px;margin-bottom:.6rem;display:block">`:''}
       <div class="aw-preview" id="awPrev" onclick="this.classList.toggle('exp')">${esc(preview)}</div>
       <div style="margin-top:.85rem;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-        <span class="badge" style="background:var(--bg3);color:var(--text2)">${MICONS[AW.data.media]||''} ${esc(AW.data.media)}</span>
         ${curTags.map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
       </div>`;
-    foot.innerHTML=`<button class="btn bs" onclick="AW.step=3;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awSave()"><i class="ti ti-check"></i> ${isEdit?'עדכן':'שמור'}</button>`;
+    foot.innerHTML=`<button class="btn bs" onclick="AW.step=2;renderAW()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp" onclick="awSave()"><i class="ti ti-check"></i> ${isEdit?'עדכן':'שמור'}</button>`;
   }
 }
 function awNext0(){
   const c=document.getElementById('awContent')?.value.trim();
   if(!c){toast('נא להזין תוכן');return}
   AW.data.content=c;
-  if(!AW.data.media||AW.data.media==='טקסט') AW.data.media=guessMedia('',c);
+  AW.data.media='תמונה';
   AW.step=1;renderAW();
 }
 function awNext1(){
@@ -1557,7 +1492,7 @@ async function awSave(){
   const obj={
     id:AW.editId||uid(),
     title:'',topic:'',sub:'',tool:'',type:'כללי',
-    media:AW.data.media,
+    media:'תמונה',
     content:AW.data.content,
     tags:AW.data.tags||'',
     refImage:AW.data.refImage||null,
@@ -1624,7 +1559,7 @@ async function importJSON(e){
   };
   r.readAsText(f);
 }
-function renderAll(){renderMainTabs();updateStats();updateFilters();renderCards();updateEmptyState();if(treeMode)renderTree();checkBanner()}
+function renderAll(){updateStats();updateFilters();renderCards();updateEmptyState();if(treeMode)renderTree();checkBanner()}
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
 
