@@ -326,7 +326,9 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     <div style="font-size:13px;color:var(--text2);line-height:1.6;display:flex;flex-direction:column;gap:10px">
       <div><strong>🔗 איך נכנסים?</strong><br>אין סיסמה. מזינים מייל, מקבלים קישור חד-פעמי במייל, ולוחצים עליו. החיבור נשאר זכור בדפדפן הזה אחר כך.</div>
       <div><strong>🔒 הפרומפטים שלי פרטיים?</strong><br>כן. כל מייל = חשבון נפרד לחלוטין. אף משתמש אחר לא יכול לראות את הפרומפטים שלך.</div>
-      <div id="helpSampleQ"><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות תמונה (כללי ורפרנס) כדי שתכיר את הממשק. אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
+      <div id="helpSampleQ"><strong>✨ "טען 3 פרומפטי דוגמה" - מה זה?</strong><br>כפתור שמופיע רק בחשבון ריק. מוסיף 3 דוגמאות <strong>גנריות</strong> (לא קשורות בהכרח לתחום שלך) כדי שתכיר את הממשק ואת ההבדל בין "כללי" ל"רפרנס". אפשר למחוק אותן בכל רגע ולהתחיל מהפרומפטים האמיתיים שלך.</div>
+      <div><strong>🔑 מה זה ה-API Key?</strong><br>ההודעה הצהובה למעלה היא רק לתכונה אופציונלית: ייבוא AI חכם של קבצים/צילומי מסך. אם אתה רק מוסיף פרומפטים ידנית (כפתור +) - אין צורך בו בכלל.</div>
+      <div><strong>🔵 "צור גרסה כללית" / 🟣 "צור גרסה מותאמת לרפרנס" - מה ההבדל?</strong><br>פרומפט <strong>כללי</strong> מתאר תמונה בלי תלות בתמונה ספציפית. פרומפט <strong>רפרנס</strong> כתוב כך שתעלה תמונה משלך (לדוגמה: פרצוף שלך) וה-AI ישתמש בה כבסיס. הכפתור ייצור עבורך אוטומטית (ע"י Claude) את הגרסה השנייה מהקיימת - כדי שיהיו לך שתי האפשרויות בלי לכתוב מחדש.</div>
       <div><strong>➕ איך מוסיפים פרומפט משלי?</strong><br>כפתור <strong>+</strong> להוספה ידנית מהירה, או <strong>ייבוא AI</strong> להעלאת קובץ/צילום מסך עם הרבה פרומפטים בבת אחת.</div>
     </div>
   </div>
@@ -507,13 +509,13 @@ function renderLoginGate(){
   document.getElementById('loginFormWrap').style.display=seen?'flex':'none';
   document.getElementById('loginHelpLink').style.display=seen?'block':'none';
 }
-function toggleHelp(){
+function toggleHelp(forceShowSamples){
   const e=document.getElementById('helpOverlay');
-  const opening=e.style.display!=='flex';
+  const opening=e.style.display!=='flex'||forceShowSamples;
   e.style.display=opening?'flex':'none';
   if(opening){
     const hasPrompts=(typeof D!=='undefined'&&D.prompts&&D.prompts.length>0);
-    document.getElementById('helpSampleQ').style.display=hasPrompts?'none':'block';
+    document.getElementById('helpSampleQ').style.display=(forceShowSamples||!hasPrompts)?'block':'none';
   } else {
     localStorage.setItem('ph_seen_help','1');
     renderLoginGate();
@@ -684,6 +686,7 @@ async function loadSamplePrompts(){
   }
   renderAll();
   toast('✓ נטענו 3 פרומפטי דוגמה - אפשר למחוק ולהתחיל משלך בכל רגע');
+  setTimeout(()=>toggleHelp(true),350);
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m,dur=2200){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
