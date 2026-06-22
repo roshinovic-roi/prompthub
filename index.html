@@ -296,6 +296,9 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     PromptHub
   </div>
   <div class="nav-r">
+    <button class="btn bico bs" onclick="togglePdfPanel()" title="קבצי PDF שמורים">
+      <i class="ti ti-file-type-pdf"></i>
+    </button>
     <button class="btn bp bs" onclick="openWizard()" style="gap:5px">
       <i class="ti ti-wand"></i> ייבוא AI
     </button>
@@ -327,6 +330,22 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
       <button class="btn bs" onclick="exportData()"><i class="ti ti-download"></i> ייצוא</button>
       <label class="btn bs" style="cursor:pointer"><i class="ti ti-upload"></i> ייבוא<input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
     </div>
+  </div>
+
+  <!-- PDF LIBRARY -->
+  <div id="pdfWrap" style="display:none" class="settings-wrap">
+    <div class="settings-hd">
+      <h3><i class="ti ti-file-type-pdf"></i> קבצי PDF שמורים</h3>
+      <button class="btn bico bs" onclick="togglePdfPanel()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="field">
+      <div class="key-wrap">
+        <input type="text" id="pdfTitleIn" placeholder="כותרת לקובץ...">
+        <label class="btn bp bs" style="cursor:pointer;white-space:nowrap"><i class="ti ti-upload"></i> בחר קובץ<input type="file" id="pdfFileIn" accept=".pdf" style="display:none" onchange="handlePdfUpload(event)"></label>
+      </div>
+      <div class="key-st" id="pdfUpSt"></div>
+    </div>
+    <div id="pdfList" style="margin-top:.75rem;display:flex;flex-direction:column;gap:6px"></div>
   </div>
 
   <div id="statsRow" class="stats"></div>
@@ -598,7 +617,7 @@ function toggleSettings(){
 
 // ─── WIZARD ───────────────────────────────────────────────
 const STEPS=['מקור','תוצאות','סיווג','רפרנס','שמירה'];
-function openWizard(){W={step:0,srcType:'',prompts:[],sel:[],curIdx:0,results:{},curData:{}};document.getElementById('wizBg').style.display='flex';rwiz()}
+function openWizard(){W={step:0,srcType:'',prompts:[],sel:[],curIdx:0,results:{},curData:{},pdfFile:null,pdfFileTitle:'',savePdfToLib:false};document.getElementById('wizBg').style.display='flex';rwiz()}
 function closeWizard(){document.getElementById('wizBg').style.display='none'}
 function rwizProg(){
   document.getElementById('wizProg').innerHTML=STEPS.map((s,i)=>{
@@ -762,7 +781,17 @@ function rwiz(){
             ${(r.tags||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}
             ${r.addRef?`<span class="badge bref"><i class="ti ti-photo" style="font-size:9px"></i> +רפרנס</span>`:''}
           </div>
-        </div>`).join('')}`;
+        </div>`).join('')}
+      ${W.pdfFile?`
+        <div style="margin-top:1rem;padding-top:.85rem;border-top:0.5px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;margin-bottom:.5rem">
+            <input type="checkbox" id="wSavePdf" onchange="W.savePdfToLib=this.checked;document.getElementById('wPdfTitleRow').style.display=this.checked?'block':'none'">
+            <i class="ti ti-file-type-pdf" style="color:#d4453a"></i> שמור גם את קובץ ה-PDF המקורי בספרייה
+          </label>
+          <div id="wPdfTitleRow" style="display:none">
+            <input type="text" id="wPdfTitle" placeholder="כותרת לקובץ" value="${esc(W.pdfFileTitle)}" style="font-size:13px">
+          </div>
+        </div>`:''}`;
     F.innerHTML=`<button class="btn bs" onclick="backClassify()"><i class="ti ti-arrow-right"></i> חזור</button><button class="btn bp bs" onclick="finalSave()"><i class="ti ti-device-floppy"></i> שמור ${toSave.length}</button>`;
   }
 }
@@ -776,6 +805,12 @@ async function procFile(file){
   try{
     if(W.srcType==='image'||file.type.startsWith('image/')){
       const du=await toDataUrl(file);await sendToAI(null,{b64:du.split(',')[1],mt:file.type||'image/jpeg'});
+    }else if(W.srcType==='pdf'||file.type==='application/pdf'){
+      W.pdfFile=file;
+      W.pdfFileTitle=file.name.replace(/\.pdf$/i,'');
+      const txt=await extractPdfText(file);
+      if(!txt.trim()){throw new Error('לא הצלחתי לחלץ טקסט מה-PDF (ייתכן שזה PDF סרוק/תמונה)')}
+      await sendTextChunked(txt);
     }else{
       await loadMammoth();
       const buf=await file.arrayBuffer();
@@ -969,8 +1004,18 @@ async function finalSave(){
     D.prompts.unshift(base);
     if(r.addRef&&r.refUrl){const ref={...base,id:uid(),content:`[גרסה עם תמונת רפרנס]\n\nהשתמש בתמונה המצורפת כרפרנס לאדם המוצג.\n\n${p.content}`,refImage:r.refUrl,tags:(r.tags?r.tags+',':'')+'רפרנס'};newPrompts.push(ref);D.prompts.unshift(ref)}
   });
+  const savePdf=W.pdfFile&&W.savePdfToLib;
   renderAll();closeWizard();toast(`🎉 נשמרו ${toSave.length} פרומפטים!`);
   for(const p of newPrompts)await svPrompt(p);
+  if(savePdf){
+    try{
+      const title=document.getElementById('wPdfTitle')?.value.trim()||W.pdfFileTitle||'PDF';
+      const url=await uploadPdfToStorage(W.pdfFile);
+      await sbFetch('/rest/v1/pdfs',{method:'POST',body:JSON.stringify({title,url,size_bytes:W.pdfFile.size})});
+      await loadPdfs();
+      toast('✓ קובץ ה-PDF נשמר גם בספרייה');
+    }catch(err){console.error(err);toast('שגיאה בשמירת ה-PDF: '+err.message)}
+  }
 }
 
 function loadMammoth(){return new Promise((res,rej)=>{if(typeof mammoth!=='undefined'){res();return}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
@@ -994,6 +1039,94 @@ async function uploadImgToStorage(file,oldUrl){
     if(oldPath)fetch(`${SB_URL}/storage/v1/object/prompt-images/${oldPath}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
   }
   return `${SB_URL}/storage/v1/object/public/prompt-images/${path}`;
+}
+
+// ─── PDF LIBRARY ──────────────────────────────────────────
+let D_pdfs=[];
+function togglePdfPanel(){
+  const e=document.getElementById('pdfWrap');
+  const opening=e.style.display!=='block';
+  e.style.display=opening?'block':'none';
+  if(opening)renderPdfList();
+}
+async function loadPdfs(){
+  try{
+    D_pdfs=await sbFetch('/rest/v1/pdfs?select=*&order=created_at.desc');
+  }catch(e){console.error('loadPdfs error:',e);D_pdfs=[]}
+}
+function renderPdfList(){
+  const c=document.getElementById('pdfList');
+  if(!D_pdfs.length){c.innerHTML='<p style="font-size:12.5px;color:var(--text3);text-align:center;padding:.5rem 0">אין קבצים שמורים עדיין</p>';return}
+  c.innerHTML=D_pdfs.map(p=>`
+    <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:10px;padding:.55rem .7rem">
+      <i class="ti ti-file-type-pdf" style="color:#d4453a;font-size:18px;flex-shrink:0"></i>
+      <a href="${esc(p.url)}" target="_blank" style="flex:1;font-size:13px;color:var(--text);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</a>
+      <span style="font-size:10.5px;color:var(--text3);flex-shrink:0">${new Date(p.created_at).toLocaleDateString('he-IL')}</span>
+      <button class="btn bico bs" style="flex-shrink:0;width:28px;height:28px" onclick="deletePdf('${p.id}','${esc(p.url)}')"><i class="ti ti-trash" style="font-size:14px;color:#e15555"></i></button>
+    </div>`).join('');
+}
+async function uploadPdfToStorage(file){
+  const path=`pdf_${Date.now()}_${Math.random().toString(36).slice(2,8)}.pdf`;
+  const res=await fetch(`${SB_URL}/storage/v1/object/prompt-images/${path}`,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/pdf'},
+    body:file
+  });
+  if(!res.ok){const e=await res.text();throw new Error('Storage upload failed: '+res.status+' '+e)}
+  return `${SB_URL}/storage/v1/object/public/prompt-images/${path}`;
+}
+async function handlePdfUpload(e){
+  const f=e.target.files[0];if(!f)return;
+  const titleIn=document.getElementById('pdfTitleIn');
+  const title=titleIn.value.trim()||f.name.replace(/\.pdf$/i,'');
+  if(f.size>40*1024*1024){toast('הקובץ גדול מ-40MB');e.target.value='';return}
+  document.getElementById('pdfUpSt').textContent='מעלה...';
+  try{
+    const url=await uploadPdfToStorage(f);
+    await sbFetch('/rest/v1/pdfs',{method:'POST',body:JSON.stringify({title,url,size_bytes:f.size})});
+    document.getElementById('pdfUpSt').textContent='';
+    titleIn.value='';e.target.value='';
+    toast('✓ הקובץ נשמר');
+    await loadPdfs();renderPdfList();
+  }catch(err){console.error(err);document.getElementById('pdfUpSt').textContent='';toast('שגיאת העלאה: '+err.message)}
+}
+async function deletePdf(id,url){
+  if(!confirm('למחוק את הקובץ?'))return;
+  try{
+    await sbFetch('/rest/v1/pdfs?id=eq.'+id,{method:'DELETE'});
+    const path=url.split('/prompt-images/')[1];
+    if(path)fetch(`${SB_URL}/storage/v1/object/prompt-images/${path}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).catch(()=>{});
+    D_pdfs=D_pdfs.filter(p=>p.id!==id);
+    renderPdfList();
+    toast('✓ נמחק');
+  }catch(err){console.error(err);toast('שגיאת מחיקה')}
+}
+
+// ─── PDF TEXT EXTRACTION (for AI import) ─────────────────
+function loadPdfJs(){
+  return new Promise((res,rej)=>{
+    if(window.pdfjsLib){res();return}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+    s.onload=()=>{
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+      res();
+    };
+    s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+async function extractPdfText(file){
+  await loadPdfJs();
+  const buf=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    text+=content.items.map(it=>it.str).join(' ')+'\n\n';
+  }
+  return text;
 }
 
 // ─── TREE ─────────────────────────────────────────────────
@@ -1402,7 +1535,7 @@ function renderAll(){renderMainTabs();updateStats();updateFilters();renderCards(
 
 window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';document.head.appendChild(s)});
 
-ld().then(()=>{renderAll();loadKeyFromSB();});
+ld().then(()=>{renderAll();loadKeyFromSB();loadPdfs();});
 </script>
 </body>
 </html>
