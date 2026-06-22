@@ -543,20 +543,21 @@ function toggleHelp(){
   }
 }
 async function sendMagicLink(){
-  try{
-    const email=document.getElementById('loginEmail').value.trim();
-    if(!email){toast('הזן כתובת מייל');return}
-    const btn=document.getElementById('loginBtn');
-    btn.disabled=true;btn.textContent='שולח...';
-    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
-    btn.disabled=false;btn.textContent='שלח קישור התחברות';
-    if(error){alert('DEBUG שגיאת Supabase: '+error.message);toast('שגיאה: '+error.message);return}
-    document.getElementById('loginStatus').textContent='✓ קישור התחברות נשלח ל-'+email+' — בדוק את תיבת המייל';
-  }catch(err){
-    alert('DEBUG שגיאת JS: '+(err&&err.message?err.message:err));
-    const btn=document.getElementById('loginBtn');
-    if(btn){btn.disabled=false;btn.textContent='שלח קישור התחברות'}
+  const email=document.getElementById('loginEmail').value.trim();
+  if(!email){toast('הזן כתובת מייל');return}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.textContent='שולח...';
+  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+  btn.disabled=false;btn.textContent='שלח קישור התחברות';
+  if(error){
+    if(error.message&&error.message.includes('rate limit')){
+      document.getElementById('loginStatus').innerHTML='⚠️ הגעת למגבלת שליחת מיילים השעה - נסה שוב בעוד כמה דקות';
+    }else{
+      toast('שגיאה: '+error.message);
+    }
+    return;
   }
+  document.getElementById('loginStatus').textContent='✓ קישור התחברות נשלח ל-'+email+' — בדוק את תיבת המייל';
 }
 async function doLogout(){
   await sb.auth.signOut();
