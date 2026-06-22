@@ -717,11 +717,13 @@ async function saveKey(){
   const k=document.getElementById('apiKey').value.trim();
   localStorage.setItem('ph_key',k);
   try{
-    let storeVal=k;
+    let storeVal=null;
     if(k){
       const encRes=await fetch('/api/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'encrypt',value:k})});
       if(encRes.ok){storeVal=(await encRes.json()).result}
-      else console.warn('key encrypt failed, this should not happen - aborting remote save');
+      else{console.error('key encrypt failed - aborting remote save, key stays local-only for now');toast('⚠️ נשמר רק במכשיר זה (הצפנת שרת לא הגיבה)');renderKeySt();checkBanner();return}
+    }else{
+      storeVal='';
     }
     const res=await fetch(SB_URL+'/rest/v1/settings',{
       method:'POST',
@@ -734,7 +736,7 @@ async function saveKey(){
     });
     if(!res.ok){const e=await res.text();console.error('saveKey error:',res.status,e)}
     else{console.log('API key saved to Supabase (encrypted)')}
-  }catch(e){console.error('saveKey SB error:',e)}
+  }catch(e){console.error('saveKey SB error:',e);toast('⚠️ נשמר רק במכשיר זה (שגיאת רשת)');renderKeySt();checkBanner();return}
   renderKeySt();toast('✓ API Key נשמר');checkBanner();
 }
 async function loadKeyFromSB(){
