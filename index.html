@@ -717,6 +717,12 @@ async function saveKey(){
   const k=document.getElementById('apiKey').value.trim();
   localStorage.setItem('ph_key',k);
   try{
+    let storeVal=k;
+    if(k){
+      const encRes=await fetch('/api/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'encrypt',value:k})});
+      if(encRes.ok){storeVal=(await encRes.json()).result}
+      else console.warn('key encrypt failed, this should not happen - aborting remote save');
+    }
     const res=await fetch(SB_URL+'/rest/v1/settings',{
       method:'POST',
       headers:{
@@ -724,10 +730,10 @@ async function saveKey(){
         'Content-Type':'application/json',
         'Prefer':'resolution=merge-duplicates'
       },
-      body:JSON.stringify({key:'api_key',value:k,user_id:SESSION&&SESSION.user?SESSION.user.id:null})
+      body:JSON.stringify({key:'api_key',value:storeVal,user_id:SESSION&&SESSION.user?SESSION.user.id:null})
     });
     if(!res.ok){const e=await res.text();console.error('saveKey error:',res.status,e)}
-    else{console.log('API key saved to Supabase')}
+    else{console.log('API key saved to Supabase (encrypted)')}
   }catch(e){console.error('saveKey SB error:',e)}
   renderKeySt();toast('✓ API Key נשמר');checkBanner();
 }
@@ -735,9 +741,14 @@ async function loadKeyFromSB(){
   try{
     const rows=await sbFetch('/rest/v1/settings?key=eq.api_key&select=value');
     if(rows&&rows[0]&&rows[0].value){
-      localStorage.setItem('ph_key',rows[0].value);
+      let plain=rows[0].value;
+      try{
+        const decRes=await fetch('/api/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'decrypt',value:plain})});
+        if(decRes.ok)plain=(await decRes.json()).result;
+      }catch(e){console.warn('key decrypt failed, value may be legacy plaintext:',e)}
+      localStorage.setItem('ph_key',plain);
       const el=document.getElementById('apiKey');
-      if(el)el.value=rows[0].value;
+      if(el)el.value=plain;
       renderKeySt();checkBanner();
     }
   }catch(e){console.error('loadKey SB error:',e)}
