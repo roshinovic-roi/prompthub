@@ -352,6 +352,15 @@ main{max-width:860px;margin:0 auto;padding:1.1rem .85rem calc(4rem + var(--safe-
     <button class="btn bico bs" onclick="toggleHelp()" title="עזרה">
       <i class="ti ti-help-circle"></i>
     </button>
+    <div style="position:relative">
+      <button class="btn bico bs" onclick="toggleFeedbackMenu()" title="משוב/בעיה">
+        <i class="ti ti-message-2"></i>
+      </button>
+      <div id="feedbackMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--bg);box-shadow:var(--sh);border-radius:12px;padding:.4rem;z-index:200;min-width:160px">
+        <a href="mailto:roshinovic@gmail.com?subject=PromptHub%20-%20משוב" style="display:flex;align-items:center;gap:7px;padding:.5rem .6rem;border-radius:8px;font-size:13px;color:var(--text);text-decoration:none" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><i class="ti ti-mail" style="font-size:16px"></i> שלח מייל</a>
+        <a href="https://wa.me/972526750633?text=PromptHub%20-%20רציתי%20לשתף%20משוב" target="_blank" style="display:flex;align-items:center;gap:7px;padding:.5rem .6rem;border-radius:8px;font-size:13px;color:var(--text);text-decoration:none" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''"><i class="ti ti-brand-whatsapp" style="font-size:16px;color:#25D366"></i> וואטסאפ</a>
+      </div>
+    </div>
     <button class="btn bico bs" onclick="doLogout()" title="התנתק">
       <i class="ti ti-logout"></i>
     </button>
@@ -777,6 +786,16 @@ function dismissTipNow(){
   if(t)localStorage.setItem('ph_tip_'+t.key,'1');
   showNextTip();
 }
+function toggleFeedbackMenu(){
+  const m=document.getElementById('feedbackMenu');
+  m.style.display=m.style.display==='block'?'none':'block';
+}
+document.addEventListener('click',(e)=>{
+  const m=document.getElementById('feedbackMenu');
+  if(m&&m.style.display==='block'&&!e.target.closest('#feedbackMenu')&&!e.target.closest('[onclick="toggleFeedbackMenu()"]')){
+    m.style.display='none';
+  }
+});
 function toggleSettings(){
   const p=document.getElementById('settingsWrap'),show=p.style.display==='none';
   p.style.display=show?'block':'none';
@@ -785,12 +804,10 @@ function toggleSettings(){
 function updateBackupSt(){
   const el=document.getElementById('backupSt');if(!el)return;
   const ts=localStorage.getItem('ph_last_backup');
-  if(!ts){el.innerHTML='⚠️ עדיין לא ביצעת גיבוי. מומלץ לייצא לפחות פעם בשבוע.';el.style.color='var(--ad)';return}
+  if(!ts){el.innerHTML='ℹ️ הפרומפטים שלך כבר שמורים בבטחה בשרת - הייצוא הוא רק עותק נוסף אם תרצה.';el.style.color='var(--text3)';return}
   const d=new Date(parseInt(ts));
-  const days=Math.floor((Date.now()-d.getTime())/86400000);
   const dateStr=d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'});
-  if(days>=7){el.innerHTML=`⚠️ גיבוי אחרון: ${dateStr} (לפני ${days} ימים) — מומלץ לגבות`;el.style.color='var(--ad)'}
-  else{el.innerHTML=`✓ גיבוי אחרון: ${dateStr}`;el.style.color='var(--text3)'}
+  el.innerHTML=`✓ עותק ייצוא אחרון: ${dateStr} (הדאטה שלך תמיד שמור בשרת, בכל מקרה)`;el.style.color='var(--text3)';
 }
 
 // ─── WIZARD ───────────────────────────────────────────────
