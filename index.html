@@ -1398,8 +1398,10 @@ function renderCards(){
   const tagSearch=q.startsWith('#')?q.slice(1).toLowerCase():null;
   const qLow=q.toLowerCase();
   let list=D.prompts.filter(p=>{
-    if(kindFilter==='כללי'&&p.kind==='רפרנס')return false;
-    if(kindFilter==='רפרנס'&&p.kind!=='רפרנס')return false;
+    if(p.kind){
+      if(kindFilter==='כללי'&&p.kind==='רפרנס')return false;
+      if(kindFilter==='רפרנס'&&p.kind!=='רפרנס')return false;
+    }
     if(fImg==='yes'&&!p.refImage&&!p.refImageAdapted)return false;
     if(fImg==='no'&&(p.refImage||p.refImageAdapted))return false;
     if(tagSearch){
