@@ -511,6 +511,9 @@ async function initAuth(){
   });
 }
 function showLogin(){
+  tipQueue=[];
+  document.getElementById('floatTip')?.remove();
+  document.querySelectorAll('.tip-highlight').forEach(e=>e.classList.remove('tip-highlight'));
   document.getElementById('loginOverlay').style.display='flex';
   document.getElementById('navBar').style.display='none';
   document.getElementById('mainRoot').style.display='none';
@@ -540,14 +543,20 @@ function toggleHelp(){
   }
 }
 async function sendMagicLink(){
-  const email=document.getElementById('loginEmail').value.trim();
-  if(!email){toast('הזן כתובת מייל');return}
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;btn.textContent='שולח...';
-  const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
-  btn.disabled=false;btn.textContent='שלח קישור התחברות';
-  if(error){toast('שגיאה: '+error.message);return}
-  document.getElementById('loginStatus').textContent='✓ קישור התחברות נשלח ל-'+email+' — בדוק את תיבת המייל';
+  try{
+    const email=document.getElementById('loginEmail').value.trim();
+    if(!email){toast('הזן כתובת מייל');return}
+    const btn=document.getElementById('loginBtn');
+    btn.disabled=true;btn.textContent='שולח...';
+    const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin}});
+    btn.disabled=false;btn.textContent='שלח קישור התחברות';
+    if(error){alert('DEBUG שגיאת Supabase: '+error.message);toast('שגיאה: '+error.message);return}
+    document.getElementById('loginStatus').textContent='✓ קישור התחברות נשלח ל-'+email+' — בדוק את תיבת המייל';
+  }catch(err){
+    alert('DEBUG שגיאת JS: '+(err&&err.message?err.message:err));
+    const btn=document.getElementById('loginBtn');
+    if(btn){btn.disabled=false;btn.textContent='שלח קישור התחברות'}
+  }
 }
 async function doLogout(){
   await sb.auth.signOut();
