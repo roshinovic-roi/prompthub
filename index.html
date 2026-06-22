@@ -1062,6 +1062,7 @@ function renderPdfList(){
       <i class="ti ti-file-type-pdf" style="color:#d4453a;font-size:18px;flex-shrink:0"></i>
       <a href="${esc(p.url)}" target="_blank" style="flex:1;font-size:13px;color:var(--text);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</a>
       <span style="font-size:10.5px;color:var(--text3);flex-shrink:0">${new Date(p.created_at).toLocaleDateString('he-IL')}</span>
+      <button class="btn bico bs" style="flex-shrink:0;width:28px;height:28px" onclick="editPdfTitle('${p.id}')"><i class="ti ti-pencil" style="font-size:14px"></i></button>
       <button class="btn bico bs" style="flex-shrink:0;width:28px;height:28px" onclick="deletePdf('${p.id}','${esc(p.url)}')"><i class="ti ti-trash" style="font-size:14px;color:#e15555"></i></button>
     </div>`).join('');
 }
@@ -1089,6 +1090,19 @@ async function handlePdfUpload(e){
     toast('✓ הקובץ נשמר');
     await loadPdfs();renderPdfList();
   }catch(err){console.error(err);document.getElementById('pdfUpSt').textContent='';toast('שגיאת העלאה: '+err.message)}
+}
+async function editPdfTitle(id){
+  const p=D_pdfs.find(x=>x.id===id);if(!p)return;
+  const newTitle=prompt('שם חדש לקובץ:',p.title);
+  if(newTitle===null)return;
+  const t=newTitle.trim();
+  if(!t){toast('שם לא יכול להיות ריק');return}
+  try{
+    await sbFetch('/rest/v1/pdfs?id=eq.'+id,{method:'PATCH',body:JSON.stringify({title:t})});
+    p.title=t;
+    renderPdfList();
+    toast('✓ שם הקובץ עודכן');
+  }catch(err){console.error(err);toast('שגיאת עדכון')}
 }
 async function deletePdf(id,url){
   if(!confirm('למחוק את הקובץ?'))return;
