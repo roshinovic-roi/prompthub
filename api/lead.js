@@ -30,16 +30,6 @@ export default async function handler(req, res) {
 
   const results = { capi: null, telegram: null };
 
-  console.log('[lead] received email:', email);
-  console.log('[lead] env check:', {
-    hasPixelId: !!PIXEL_ID,
-    hasCapiToken: !!CAPI_TOKEN,
-    hasTgToken: !!TG_TOKEN,
-    hasTgChatId: !!TG_CHAT_ID,
-    capiTokenLen: CAPI_TOKEN.length,
-    capiTokenRawLen: (process.env.META_CAPI_TOKEN || '').length,
-  });
-
   // 1. Send Lead event to Meta Conversions API
   if (PIXEL_ID && CAPI_TOKEN) {
     try {
