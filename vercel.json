@@ -3,6 +3,7 @@
   "builds": [
     { "src": "api/claude.js", "use": "@vercel/node" },
     { "src": "api/lead.js", "use": "@vercel/node" },
+    { "src": "api/key.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "landing.html", "use": "@vercel/static" },
     { "src": "dashboard.html", "use": "@vercel/static" },
@@ -14,6 +15,7 @@
   "routes": [
     { "src": "/api/claude", "dest": "/api/claude.js" },
     { "src": "/api/lead", "dest": "/api/lead.js" },
+    { "src": "/api/key", "dest": "/api/key.js" },
     { "src": "/manifest.json", "dest": "/manifest.json" },
     { "src": "/sw.js", "dest": "/sw.js" },
     { "src": "/icon-192.png", "dest": "/icon-192.png" },
