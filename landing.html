@@ -98,6 +98,19 @@ src="https://www.facebook.com/tr?id=1549116773231542&ev=PageView&noscript=1"
 
   .fineprint{color:#6b6390;font-size:12.5px;text-align:center;margin-top:12px;}
 
+  .compare-block{border-radius:14px;padding:18px 20px;margin-bottom:14px;
+    border:1px solid var(--line);background:var(--bg-panel);}
+  .compare-bad{border-color:#5a2a3a;}
+  .compare-bad .compare-title{color:#ff6b8a;}
+  .compare-good{border-color:#1f5a3f;}
+  .compare-good .compare-title{color:#4ade80;}
+  .compare-title{font-weight:700;font-size:15px;margin:0 0 12px;}
+  .compare-block ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .compare-block li{font-size:14.5px;line-height:1.5;color:var(--ink-dim);
+    display:flex;gap:8px;align-items:flex-start;}
+  .compare-block li .mark{flex-shrink:0;line-height:1.5;}
+  .compare-wrap{margin-bottom:8px;}
+
   .state{display:none;text-align:center;padding:30px 10px;}
   .state.show{display:block;}
   .state .check{font-size:38px;margin-bottom:10px;}
@@ -129,6 +142,29 @@ src="https://www.facebook.com/tr?id=1549116773231542&ev=PageView&noscript=1"
 
   <h1>כל הפרומפטים שלך,<br><em>במקום אחד מסודר</em></h1>
   <p class="lede">לא עוד גלילה אינסופית בהיסטוריית צ'אטים בחיפוש אחרי פרומפט ששמרת בעבר. PromptHub אוסף, מתייג ומחזיר לך אותו ברגע שאתה צריך.</p>
+
+  <div class="compare-wrap">
+    <div class="compare-block compare-bad">
+      <div class="compare-title">🔴 איך זה היה עד היום</div>
+      <ul>
+        <li><span class="mark">❌</span><span>פרומפט טוב נשמר בהערות בנייד — ואף פעם לא מוצאים אותו כשבאמת צריך</span></li>
+        <li><span class="mark">❌</span><span>צילום מסך של פרומפט שראיתם ברשת נטמע בגלריה, בין עוד 500 תמונות</span></li>
+        <li><span class="mark">❌</span><span>גוללים אחורה בהיסטוריית הצ'אט בתקווה למצוא את הפרומפט מלפני שבוע</span></li>
+        <li><span class="mark">❌</span><span>קובץ Word אחד שמצטבר וגדל, בלי שום סדר או חיפוש</span></li>
+        <li><span class="mark">❌</span><span>אין הבדל בין פרומפט "כללי" לפרומפט עם תמונת רפרנס — הכל מבולגן יחד</span></li>
+      </ul>
+    </div>
+    <div class="compare-block compare-good">
+      <div class="compare-title">🟢 ומעכשיו, עם PromptHub</div>
+      <ul>
+        <li><span class="mark">✅</span><span>כל פרומפט נשמר, מתויג ומסונן לפי קטגוריה — לתמיד</span></li>
+        <li><span class="mark">✅</span><span>חיפוש מיידי: מוצאים כל פרומפט בכמה שניות, בלי לגלול</span></li>
+        <li><span class="mark">✅</span><span>ייבוא חכם: מעלים קובץ או צילום מסך, וClaude מסווג הכל בעצמו</span></li>
+        <li><span class="mark">✅</span><span>הבחנה אוטומטית בין פרומפט כללי לפרומפט עם תמונת רפרנס</span></li>
+        <li><span class="mark">✅</span><span>גישה מכל מכשיר ובכל זמן — לא תלוי בהיסטוריית צ'אט שנמחקת</span></li>
+      </ul>
+    </div>
+  </div>
 
   <div class="price-card">
     <div class="price-row">
