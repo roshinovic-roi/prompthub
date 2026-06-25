@@ -7,46 +7,91 @@
 <style>
   :root{
     --bg:#0c0a14;
+    --bg2:#120f1d;
     --bg-panel:#15121f;
     --ink:#f1eefc;
     --ink-dim:#a39bc4;
     --accent:#7c5cff;
+    --accent2:#a78bfa;
     --good:#3ddc97;
     --bad:#ff6b6b;
+    --warn:#ffb84d;
+    --pink:#ff6bb5;
+    --blue:#4dc4ff;
     --line:#2a2440;
     --mono: 'SF Mono', 'Consolas', monospace;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;}
-  .wrap{max-width:920px;margin:0 auto;padding:32px 18px 60px;}
-  h1{font-size:22px;margin:0 0 4px;}
-  .sub{color:var(--ink-dim);font-size:13.5px;margin:0 0 28px;}
+  html,body{margin:0;background:
+    radial-gradient(900px 500px at 10% -10%, #2a1f55 0%, transparent 60%),
+    radial-gradient(700px 500px at 110% 10%, #3a1a4a 0%, transparent 55%),
+    var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:32px 18px 80px;}
+  h1{font-size:24px;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+  .sub{color:var(--ink-dim);font-size:13.5px;margin:0 0 26px;}
 
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:30px;}
-  .card{background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;padding:16px;}
-  .card .num{font-size:28px;font-weight:700;}
-  .card .lbl{color:var(--ink-dim);font-size:12.5px;margin-top:4px;}
-  .card.good .num{color:var(--good);}
-  .card.bad .num{color:var(--bad);}
+  .section-title{font-size:14px;font-weight:700;color:var(--ink-dim);margin:30px 0 12px;
+    display:flex;align-items:center;gap:8px;letter-spacing:.02em;}
+  .section-title .line{flex:1;height:1px;background:var(--line);}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+  .card{position:relative;border-radius:16px;padding:18px 16px;overflow:hidden;
+    border:1px solid var(--line);background:var(--bg-panel);
+    box-shadow:0 6px 20px -10px rgba(0,0,0,.6);}
+  .card::before{content:'';position:absolute;inset:0;opacity:.16;background:var(--g);pointer-events:none;}
+  .card .icon{font-size:18px;margin-bottom:6px;display:block;}
+  .card .num{font-size:30px;font-weight:800;letter-spacing:-.02em;position:relative;z-index:1;}
+  .card .lbl{color:var(--ink-dim);font-size:12px;margin-top:4px;position:relative;z-index:1;}
+
+  .card.c-views{--g:linear-gradient(135deg,var(--blue),transparent);}      .card.c-views .num{color:var(--blue);}
+  .card.c-leads{--g:linear-gradient(135deg,var(--accent2),transparent);}   .card.c-leads .num{color:var(--accent2);}
+  .card.c-conv{--g:linear-gradient(135deg,var(--pink),transparent);}       .card.c-conv .num{color:var(--pink);}
+  .card.c-good{--g:linear-gradient(135deg,var(--good),transparent);}      .card.c-good .num{color:var(--good);}
+  .card.c-bad{--g:linear-gradient(135deg,var(--bad),transparent);}        .card.c-bad .num{color:var(--bad);}
+  .card.c-warn{--g:linear-gradient(135deg,var(--warn),transparent);}      .card.c-warn .num{color:var(--warn);}
+
+  .sim-box{border:1px dashed #7c5cff66;border-radius:16px;padding:16px;background:#7c5cff0d;margin-top:14px;}
+  .sim-box .badge{display:inline-flex;align-items:center;gap:6px;background:#7c5cff22;color:var(--accent2);
+    font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+  .sim-note{color:var(--ink-dim);font-size:12px;margin-top:10px;line-height:1.6;}
+  .spend-row{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;}
+  .spend-row label{font-size:13px;color:var(--ink-dim);}
+  .spend-row input{background:var(--bg);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:8px 10px;font-size:14px;width:100px;font-family:var(--mono);}
+  .spend-row input:focus{outline:2px solid var(--accent);}
+
+  .chart-box{background:var(--bg-panel);border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .chart-bars{display:flex;align-items:flex-end;gap:6px;height:120px;margin-top:6px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+  .bar{width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--accent2),var(--accent));
+    min-height:3px;transition:height .4s ease;}
+  .bar-day{font-size:10px;color:var(--ink-dim);white-space:nowrap;}
+  .bar-val{font-size:11px;color:var(--ink);font-weight:700;}
 
   table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--bg-panel);
-    border-radius:12px;overflow:hidden;}
-  th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);}
-  th{color:var(--ink-dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
+    border-radius:14px;overflow:hidden;border:1px solid var(--line);}
+  th,td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--line);}
+  th{color:var(--ink-dim);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;
+    background:#ffffff05;}
   tr:last-child td{border-bottom:none;}
-  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-family:var(--mono);}
+  tr:hover td{background:#ffffff04;}
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-family:var(--mono);font-weight:700;}
   .pill.ok{background:#3ddc9722;color:var(--good);}
   .pill.fail{background:#ff6b6b22;color:var(--bad);}
   .email{font-family:var(--mono);font-size:12.5px;}
   .time{color:var(--ink-dim);font-size:12px;white-space:nowrap;}
 
   .loading,.empty{text-align:center;color:var(--ink-dim);padding:40px 0;}
-  .refresh{position:fixed;left:18px;bottom:18px;background:var(--accent);color:#fff;border:none;
-    border-radius:50px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;}
+  .refresh{position:fixed;left:18px;bottom:18px;background:linear-gradient(135deg,var(--accent),var(--pink));
+    color:#fff;border:none;border-radius:50px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;
+    box-shadow:0 8px 20px -6px #7c5cff88;}
 
   @media (max-width:560px){
-    th:nth-child(4), td:nth-child(4){display:none;} /* hide source url on mobile */
+    th:nth-child(4), td:nth-child(4){display:none;}
   }
 </style>
 </head>
@@ -59,6 +104,24 @@
     <div class="loading">טוען נתונים...</div>
   </div>
 
+  <div class="sim-box" id="simBox" style="display:none">
+    <span class="badge">🧪 סימולציה לתרגול — לא תשלום אמיתי</span>
+    <div class="cards" id="simCards"></div>
+    <div class="spend-row">
+      <label for="spendInput">💸 תקציב פרסום שהושקע בפועל (₪):</label>
+      <input type="number" id="spendInput" min="0" step="0.01" placeholder="0">
+    </div>
+    <div class="sim-note">
+      ההכנסה והרווח כאן הם <b>היפותטיים</b> — מניחים שכל הרשמה "שווה" ₪9.9, כאילו נמכרה, על מנת לתרגם את נתוני ה-Lead האמיתיים לכלים שבעתיד ישמשו למדידת מכירות אמיתיות (ROAS וכו'). אין כאן תשלום אמיתי, ולא נשלח שום אירוע Purchase ל-Meta.
+    </div>
+  </div>
+
+  <div class="section-title"><span>📈 הרשמות לפי יום (14 ימים אחרונים)</span><span class="line"></span></div>
+  <div class="chart-box">
+    <div class="chart-bars" id="chartBars"></div>
+  </div>
+
+  <div class="section-title"><span>📋 הרשמות מפורטות</span><span class="line"></span></div>
   <table id="tbl" style="display:none">
     <thead>
       <tr>
@@ -79,17 +142,67 @@
 <script>
 const SUPA_URL = 'https://qfjngabqhxbpnvfssijq.supabase.co';
 const SUPA_KEY = 'sb_publishable__VyQ0LyxUDbLQosfGAEudg_r-AKm8cq';
+const SIM_PRICE = 9.9;
+const SPEND_KEY = 'ph_dash_spend';
 
 function fmtTime(iso){
   const d = new Date(iso);
   return d.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+function fmtMoney(n){
+  return '₪' + n.toLocaleString('he-IL', {maximumFractionDigits:2});
+}
+function dayKey(iso){
+  return new Date(iso).toLocaleDateString('he-IL', { timeZone:'Asia/Jerusalem', day:'2-digit', month:'2-digit' });
+}
+
+function renderChart(rows){
+  const days = [];
+  const now = new Date();
+  for(let i=13;i>=0;i--){
+    const d = new Date(now);
+    d.setDate(d.getDate()-i);
+    days.push(d.toLocaleDateString('he-IL', { timeZone:'Asia/Jerusalem', day:'2-digit', month:'2-digit' }));
+  }
+  const counts = {};
+  days.forEach(d => counts[d] = 0);
+  rows.forEach(r => {
+    const k = dayKey(r.created_at);
+    if (k in counts) counts[k]++;
+  });
+  const max = Math.max(1, ...Object.values(counts));
+  const el = document.getElementById('chartBars');
+  el.innerHTML = days.map(d => {
+    const v = counts[d];
+    const h = Math.max(3, Math.round((v/max)*100));
+    return `<div class="bar-col">
+      <div class="bar-val">${v>0?v:''}</div>
+      <div class="bar" style="height:${h}px"></div>
+      <div class="bar-day">${d}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSim(total, spendVal){
+  const revenue = total * SIM_PRICE;
+  const spend = spendVal || 0;
+  const profit = revenue - spend;
+  const roas = spend > 0 ? (revenue/spend) : null;
+  const cpa = total > 0 && spend > 0 ? (spend/total) : null;
+
+  document.getElementById('simCards').innerHTML = `
+    <div class="card c-good"><span class="icon">💰</span><div class="num">${fmtMoney(revenue)}</div><div class="lbl">הכנסה משוערת (${total} × ₪${SIM_PRICE})</div></div>
+    <div class="card ${profit>=0?'c-good':'c-bad'}"><span class="icon">📦</span><div class="num">${fmtMoney(profit)}</div><div class="lbl">רווח משוער (לפני תקציב=הכנסה)</div></div>
+    <div class="card c-warn"><span class="icon">🔁</span><div class="num">${roas!==null ? roas.toFixed(2)+'x' : '—'}</div><div class="lbl">ROAS משוער ${roas!==null?'':'(הזן תקציב)'}</div></div>
+    <div class="card c-leads"><span class="icon">🎯</span><div class="num">${cpa!==null ? fmtMoney(cpa) : '—'}</div><div class="lbl">עלות לליד בפועל</div></div>
+  `;
 }
 
 async function load(){
   document.getElementById('cards').innerHTML = '<div class="loading">טוען נתונים...</div>';
 
   const [leadsRes, viewsRes] = await Promise.all([
-    fetch(`${SUPA_URL}/rest/v1/lead_events?select=*&order=created_at.desc&limit=200`, {
+    fetch(`${SUPA_URL}/rest/v1/lead_events?select=*&order=created_at.desc&limit=500`, {
       headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
     }),
     fetch(`${SUPA_URL}/rest/v1/page_views?select=id`, {
@@ -108,12 +221,27 @@ async function load(){
   const convRate = totalViews ? Math.round((total/totalViews)*100) : 0;
 
   document.getElementById('cards').innerHTML = `
-    <div class="card"><div class="num">${totalViews}</div><div class="lbl">כניסות לדף הנחיתה</div></div>
-    <div class="card"><div class="num">${total}</div><div class="lbl">סה"כ הרשמות (מייל)</div></div>
-    <div class="card good"><div class="num">${convRate}%</div><div class="lbl">אחוז המרה (הרשמות/כניסות)</div></div>
-    <div class="card ${capiRate>=80?'good':'bad'}"><div class="num">${capiRate}%</div><div class="lbl">הצלחת CAPI (${capiOk}/${total})</div></div>
-    <div class="card ${tgRate>=80?'good':'bad'}"><div class="num">${tgRate}%</div><div class="lbl">הצלחת טלגרם (${tgOk}/${total})</div></div>
+    <div class="card c-views"><span class="icon">👁️</span><div class="num">${totalViews}</div><div class="lbl">כניסות לדף הנחיתה</div></div>
+    <div class="card c-leads"><span class="icon">📝</span><div class="num">${total}</div><div class="lbl">סה"כ הרשמות (מייל)</div></div>
+    <div class="card c-conv"><span class="icon">📐</span><div class="num">${convRate}%</div><div class="lbl">אחוז המרה (הרשמות/כניסות)</div></div>
+    <div class="card ${capiRate>=80?'c-good':'c-bad'}"><span class="icon">📡</span><div class="num">${capiRate}%</div><div class="lbl">הצלחת CAPI (${capiOk}/${total})</div></div>
+    <div class="card ${tgRate>=80?'c-good':'c-bad'}"><span class="icon">🔔</span><div class="num">${tgRate}%</div><div class="lbl">הצלחת טלגרם (${tgOk}/${total})</div></div>
   `;
+
+  // Simulation box
+  const simBox = document.getElementById('simBox');
+  simBox.style.display = 'block';
+  const spendInput = document.getElementById('spendInput');
+  const savedSpend = parseFloat(localStorage.getItem(SPEND_KEY) || '0');
+  spendInput.value = savedSpend || '';
+  renderSim(total, savedSpend);
+  spendInput.oninput = () => {
+    const v = parseFloat(spendInput.value) || 0;
+    localStorage.setItem(SPEND_KEY, v);
+    renderSim(total, v);
+  };
+
+  renderChart(rows);
 
   const tbody = document.getElementById('tbody');
   const tbl = document.getElementById('tbl');
