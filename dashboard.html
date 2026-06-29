@@ -116,6 +116,20 @@
     </div>
   </div>
 
+  <div class="section-title"><span>🧭 פילוח לפי מקור תנועה</span><span class="line"></span></div>
+  <table id="srcTbl" style="display:none">
+    <thead>
+      <tr>
+        <th>מקור</th>
+        <th>כניסות</th>
+        <th>הרשמות</th>
+        <th>המרה</th>
+      </tr>
+    </thead>
+    <tbody id="srcTbody"></tbody>
+  </table>
+  <div class="empty" id="srcEmpty" style="display:none">אין מספיק נתונים עדיין</div>
+
   <div class="section-title"><span>📈 הרשמות לפי יום (14 ימים אחרונים)</span><span class="line"></span></div>
   <div class="chart-box">
     <div class="chart-bars" id="chartBars"></div>
@@ -154,6 +168,51 @@ function fmtMoney(n){
 }
 function dayKey(iso){
   return new Date(iso).toLocaleDateString('he-IL', { timeZone:'Asia/Jerusalem', day:'2-digit', month:'2-digit' });
+}
+
+function extractSrc(url){
+  try{
+    const u = new URL(url);
+    return u.searchParams.get('src');
+  }catch(e){
+    return null;
+  }
+}
+
+function buildBreakdown(views, leads){
+  const map = {};
+  function bump(url, field){
+    const key = extractSrc(url) || 'ad_direct';
+    if(!map[key]) map[key] = {views:0, leads:0};
+    map[key][field]++;
+  }
+  views.forEach(v => bump(v.source_url || '', 'views'));
+  leads.forEach(l => bump(l.source_url || '', 'leads'));
+  return map;
+}
+
+function renderBreakdown(map){
+  const entries = Object.entries(map).sort((a,b) => b[1].views - a[1].views);
+  const tbl = document.getElementById('srcTbl');
+  const tbody = document.getElementById('srcTbody');
+  const emptyMsg = document.getElementById('srcEmpty');
+  if(!entries.length){
+    tbl.style.display = 'none';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+  tbl.style.display = 'table';
+  tbody.innerHTML = entries.map(([key, v]) => {
+    const label = key === 'ad_direct' ? '📢 מודעה / ישיר (ללא src)' : '🔗 ' + key;
+    const conv = v.views ? Math.round((v.leads / v.views) * 100) : 0;
+    return `<tr>
+      <td>${label}</td>
+      <td>${v.views}</td>
+      <td>${v.leads}</td>
+      <td>${conv}%</td>
+    </tr>`;
+  }).join('');
 }
 
 function renderChart(rows){
@@ -205,7 +264,7 @@ async function load(){
     fetch(`${SUPA_URL}/rest/v1/lead_events?select=*&order=created_at.desc&limit=500`, {
       headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
     }),
-    fetch(`${SUPA_URL}/rest/v1/page_views?select=id`, {
+    fetch(`${SUPA_URL}/rest/v1/page_views?select=id,source_url`, {
       headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
     })
   ]);
@@ -242,6 +301,7 @@ async function load(){
   };
 
   renderChart(rows);
+  renderBreakdown(buildBreakdown(views, rows));
 
   const tbody = document.getElementById('tbody');
   const tbl = document.getElementById('tbl');
